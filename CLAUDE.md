@@ -9,7 +9,8 @@ Lets AI assistants observe a running game of RimWorld through MCP. Open source, 
 
 Read the rules in `CONTRIBUTING.md` before changing the mod. They are hard constraints, above all:
 show only what the player can see, never modify the code or files of the game or mods, only act at the
-player's request (setup screens, settings, mod list), and leave no trace of the mod in saves.
+player's request (setup screens, settings, mod list, work priorities and schedules), and leave no trace
+of the mod in saves.
 
 Keep Unity-specific code in `BridgeBootstrap`, `BridgeHost` and `IconSheet`.
 

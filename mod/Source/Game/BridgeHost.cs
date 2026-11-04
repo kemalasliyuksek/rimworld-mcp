@@ -60,6 +60,8 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/focus", FocusEndpoint.Focus);
             Register(endpoints, "/v1/pawns", PawnEndpoints.List);
             Register(endpoints, "/v1/pawn", PawnEndpoints.Detail);
+            Register(endpoints, "/v1/pawn/work", WorkEndpoints.SetPriorities, "POST");
+            Register(endpoints, "/v1/pawn/schedule", WorkEndpoints.SetSchedule, "POST");
             Register(endpoints, "/v1/threats", ThreatEndpoint.Threats);
             Register(endpoints, "/v1/resources", ResourceEndpoint.Resources);
             Register(endpoints, "/v1/base", BaseEndpoint.Base);

@@ -29,8 +29,9 @@ Plans can change. Feedback and ideas are welcome in the issues.
 
 Optional control of the game during play, off by default.
 
-- [ ] Player-level actions only, the same things a player could do by hand, such as work priorities,
-      research, bills and zones
+- [x] Work priorities and schedules, on the player's request
+- [ ] More player-level actions, the same things a player could do by hand, such as research, bills
+      and zones
 - [ ] An in-game setting that enables them, and a way to approve each action
 - [ ] Never cheats: spawning items, editing pawns and triggering events stay out of scope
 

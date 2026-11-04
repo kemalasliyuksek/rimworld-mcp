@@ -8,8 +8,8 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
-- RimWorld 1.6 bridge mod with a local, token-protected HTTP API that cannot change the game.
-- MCP server with 38 tools covering the colony, the player's focus, pawns, threats, resources, the
+- RimWorld 1.6 bridge mod with a local, token-protected HTTP API that cannot change the game's code or files.
+- MCP server with 40 tools covering the colony, the player's focus, pawns, threats, resources, the
   base, research, events, the world, the map, game data and mods.
 - Scenario, storyteller, difficulty and world settings tools on the first new game screens, on the
   player's request.
@@ -26,6 +26,8 @@ All notable changes to this project are documented here. The format is based on
 - Visible items outside storage in `get_resources`, and counted in the overview's days of food, since
   a new colony's supplies are not in storage yet. Forbidden items are marked, and forbidden food is
   reported separately because nobody eats it until the player allows it.
+- Work priorities and schedules can be changed during play, on the player's request, and `get_pawn`
+  reports whether manual priorities are on.
 
 ### Changed
 

@@ -50,6 +50,8 @@ describe("MCP server", () => {
           "set_game_settings",
           "configure_mods",
           "set_mod_settings",
+          "set_work_priorities",
+          "set_schedule",
         ].includes(tool.name),
       );
       expect(tool.annotations?.destructiveHint, tool.name).toBe(false);
@@ -78,12 +80,16 @@ describe("MCP server", () => {
     await client.callTool({ name: "show_site", arguments: { tile: 42 } });
     await client.callTool({ name: "configure_ideo", arguments: { preset: "Unity_Family" } });
     await client.callTool({ name: "edit_starting_pawn", arguments: { index: 0, skills: "Shooting:12" } });
+    await client.callTool({ name: "set_work_priorities", arguments: { pawn: "Ayla", priorities: "Growing:1" } });
+    await client.callTool({ name: "set_schedule", arguments: { pawn: "Ayla", hours: "Sleep:22-6" } });
     await client.callTool({ name: "search_sites", arguments: { caves: "exclude", shape: "crescent" } });
 
     expect(bridge.calls).toEqual([
       { method: "POST", path: "/v1/sites/show", params: { tile: 42 } },
       { method: "POST", path: "/v1/ideo/configure", params: { preset: "Unity_Family" } },
       { method: "POST", path: "/v1/starting-pawns/edit", params: { index: 0, skills: "Shooting:12" } },
+      { method: "POST", path: "/v1/pawn/work", params: { pawn: "Ayla", priorities: "Growing:1" } },
+      { method: "POST", path: "/v1/pawn/schedule", params: { pawn: "Ayla", hours: "Sleep:22-6" } },
       { method: "GET", path: "/v1/sites/search", params: { caves: "exclude", shape: "crescent" } },
     ]);
   });

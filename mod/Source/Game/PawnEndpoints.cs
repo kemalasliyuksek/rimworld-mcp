@@ -325,13 +325,14 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
-        private static void WriteWork(JsonWriter json, Pawn pawn)
+        internal static void WriteWork(JsonWriter json, Pawn pawn)
         {
             if (pawn.workSettings == null || !pawn.workSettings.EverWork)
             {
                 return;
             }
             json.Key("work").BeginObject();
+            json.Prop("manual_priorities", Find.PlaySettings.useWorkPriorities);
             json.Key("priorities").BeginArray();
             foreach (WorkTypeDef workType in WorkTypeDefsUtility.WorkTypeDefsInPriorityOrder)
             {
@@ -341,6 +342,7 @@ namespace RimWorldMcp.Bridge.Game
                 }
                 json.BeginObject();
                 json.Prop("work", workType.labelShort);
+                json.Prop("def", workType.defName);
                 if (pawn.WorkTypeIsDisabled(workType))
                 {
                     json.Prop("disabled", true);

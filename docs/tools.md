@@ -2,7 +2,7 @@
 
 All tools are read-only, except for those marked as acting on request: `configure_new_game`, `show_site`,
 `set_start_options`, `configure_ideo`, `find_starting_pawn`, `swap_starting_pawns`, `edit_starting_pawn`,
-`set_game_settings`, `configure_mods` and `set_mod_settings`. Those marked with `map` accept an optional map id and default to the map the player
+`set_game_settings`, `configure_mods`, `set_mod_settings`, `set_work_priorities` and `set_schedule`. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -20,6 +20,8 @@ is looking at.
 | --- | --- |
 | `list_pawns` (`group`, `limit`, `map`) | Compact list. Groups: `colonists`, `prisoners`, `slaves`, `animals`, `mechanoids`, `hostiles`, `visitors`, `wildlife`. |
 | `get_pawn` (`id`) | Full details for one pawn, by id or name. |
+| `set_work_priorities` (`pawn`, `priorities`, `manual_priorities`) | Changes settings on the game's Work tab. Only when the player asks. |
+| `set_schedule` (`pawn`, `hours`) | Changes hours on the game's Schedule tab. Only when the player asks. |
 
 ## Colony
 

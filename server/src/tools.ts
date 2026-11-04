@@ -79,10 +79,44 @@ export const tools: readonly ToolDefinition[] = [
     name: "get_pawn",
     title: "Pawn details",
     description:
-      "Everything the player can see about one pawn: background, traits, skills and passions, needs, each mood thought, health conditions, capacities, gear, work priorities (1 is highest, 0 is off), schedule and relations.",
+      "Everything the player can see about one pawn: background, traits, skills and passions, needs, each mood thought, health conditions, capacities, gear, work priorities (1 is highest, 0 is off, and work they cannot do is marked disabled), whether manual priorities are on, schedule and relations. While manual priorities are off, every active job reads as 3.",
     path: "/v1/pawn",
     inputSchema: {
       id: z.string().min(1).describe("Pawn id from list_pawns, or the pawn's name."),
+    },
+  },
+  {
+    name: "set_work_priorities",
+    title: "Set work priorities",
+    description:
+      "Only when the player asks. Changes one colonist's priorities on the game's Work tab and leaves their other work as it is. Read get_pawn first for the work names and for what they cannot do. Passing 1, 2 or 4 turns on manual priorities for the whole colony, which is the checkbox on that tab, so mention it to the player. Colonists finish what they are doing, unless the work they are doing is turned off.",
+    path: "/v1/pawn/work",
+    acts: true,
+    inputSchema: {
+      pawn: z.string().min(1).describe("Pawn id from list_pawns, or the pawn's name."),
+      priorities: z
+        .string()
+        .optional()
+        .describe("Work type defNames with a priority from 0 to 4, where 1 is highest and 0 is off, for example Doctor:1,Research:2,Mining:0."),
+      manual_priorities: z
+        .enum(["true", "false"])
+        .optional()
+        .describe("Turns manual priorities on or off for the whole colony."),
+    },
+  },
+  {
+    name: "set_schedule",
+    title: "Set schedule",
+    description:
+      "Only when the player asks. Changes one colonist's hours on the game's Schedule tab and leaves the other hours as they are.",
+    path: "/v1/pawn/schedule",
+    acts: true,
+    inputSchema: {
+      pawn: z.string().min(1).describe("Pawn id from list_pawns, or the pawn's name."),
+      hours: z
+        .string()
+        .min(1)
+        .describe("Activities with a range of hours, up to but not including the last, for example Sleep:22-6,Joy:20-22,Work:6-20. The activities are Anything, Work, Joy and Sleep, plus Meditate with Royalty."),
     },
   },
   {

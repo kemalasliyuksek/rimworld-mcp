@@ -68,6 +68,8 @@ Failure looks like this:
 | `/v1/focus` | | `get_player_focus` |
 | `/v1/pawns` | `group`, `limit`, `map` | `list_pawns` |
 | `/v1/pawn` | `id` | `get_pawn` |
+| `POST /v1/pawn/work` | `pawn`, `priorities`, `manual_priorities` | `set_work_priorities` |
+| `POST /v1/pawn/schedule` | `pawn`, `hours` | `set_schedule` |
 | `/v1/threats` | `map` | `get_threats` |
 | `/v1/resources` | `map` | `get_resources` |
 | `/v1/base` | `sections`, `map` | `get_base` |

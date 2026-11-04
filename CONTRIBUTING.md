@@ -10,7 +10,8 @@ accepted:
 1. **Show only what the player can see.** New data must respect fog of war, hidden conditions and
    invisibility. Use the helpers in `mod/Source/Game/GameAccess.cs`. The one exception is the
    predicted rock layout in site search, before a game starts.
-2. **Never modify the game or its mods, and only observe during play.** Do not touch their code or files. Changing the player's settings and mod list on request is fine, through the game's own config. Read
+2. **Never modify the game or its mods, and only observe during play.** Do not touch their code or files. Changing the player's settings and mod list on request is fine, through the game's own config. The one exception during play is `set_work_priorities` and `set_schedule`, which change what the
+   player could set on the game's Work and Schedule tabs, on request. They do not command pawns. Read
    endpoints have no gameplay side effects and do not consume the game's random numbers: all endpoints
    run inside `Rand.PushState()`. On the new game screens, tools may set things up, but only when the
    player asks, using `POST`, and always leaving the final confirmation to the player. Prefer the same
