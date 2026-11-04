@@ -1,6 +1,6 @@
 # Tools
 
-All tools are read-only, except for `show_site`, `set_start_options`, `configure_ideo`, `find_starting_pawn`,
+All tools are read-only, except for `configure_new_game`, `show_site`, `set_start_options`, `configure_ideo`, `find_starting_pawn`,
 `swap_starting_pawns` and `edit_starting_pawn`, which act on the new game screens when the player asks.
 Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
@@ -45,6 +45,13 @@ is looking at.
 | `search_defs` (`q`, `type`, `limit`) | Search definitions from the game, DLCs and active mods. |
 | `get_def` (`def`, `type`) | The full data of one definition, with mod patches applied. |
 | `list_mods` | Active mods in load order. |
+
+## New game screens
+
+| Tool | Purpose |
+| --- | --- |
+| `get_new_game_setup` | The open scenario, storyteller or world settings screen, its choices and every option. |
+| `configure_new_game` (`scenario`, `storyteller`, `difficulty`, `difficulty_values`, `seed`, `planet_coverage_pct`, `rainfall`, `temperature`, `population`, `landmark_density`, `pollution_pct`) | Sets choices on the open screen. Only when the player asks. |
 
 ## Choosing a site
 
@@ -98,7 +105,7 @@ Or a flat site next to water, with caves to explore:
 | `get_starting_pawns` | Every colonist on offer, in full, and essential work nobody selected can do. |
 | `find_starting_pawn` (`index`, `gender`, `min_age`, `max_age`, `min_skills`, `passions`, `require_traits`, `forbid_traits`, `must_be_capable_of`) | Generates candidates with the game's generator and keeps the closest match. Only when the player asks. |
 | `swap_starting_pawns` (`first`, `second`) | Swaps two colonists, which is how one left behind joins the group. Only when the player asks. |
-| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`) | Sets attributes directly. Only when the player explicitly asks. |
+| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`, `head`, `body`, `clear_apparel`, `wear`, `weapon`, `add_implants`) | Sets attributes directly. Only when the player explicitly asks. |
 
 ## Connection
 
@@ -119,6 +126,7 @@ Failures come back as tool errors in the form `code: message`:
 | `not_configuring_ideo` | `configure_ideo` was called outside the ideoligion screens. |
 | `ideology_not_active` | The game does not have the Ideology expansion. |
 | `not_choosing_colonists` | A colonist tool was called outside the colonist screen. |
+| `not_on_new_game_screen` | `configure_new_game` was called outside its screens. |
 | `game_busy` | The game is loading or saving. Try again shortly. |
 | `game_not_responding` | The game's main thread did not answer in time, usually because the window is in the background with "Run in background" turned off. |
 | `not_found`, `bad_request` | The arguments do not match anything, or are invalid. |

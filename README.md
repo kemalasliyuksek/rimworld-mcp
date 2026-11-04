@@ -58,8 +58,8 @@ There is one deliberate exception, before a game begins: site search predicts th
 tile, as map preview mods do. It reveals nothing else about the map, such as ores or ruins.
 
 It never touches the game's code or files, and while you play it only observes. On the new game
-screens it can act for you if you ask: move the camera to a site, set up your ideoligion, or find and
-edit colonists. You still review the result and press Next yourself. Editing colonists can go beyond what
+screens it can act for you if you ask: choose the scenario, storyteller and world settings, move the
+camera to a site, set up your ideoligion, or find and edit colonists. You still review the result and press Next yourself. Editing colonists can go beyond what
 the game normally allows, like other character editor mods, and only happens if you ask for it.
 
 ## Safe for your save

@@ -9,8 +9,10 @@ All notable changes to this project are documented here. The format is based on
 ### Added
 
 - RimWorld 1.6 bridge mod with a local, token-protected HTTP API that cannot change the game.
-- MCP server with 29 tools covering the colony, the player's focus, pawns, threats, resources, the
+- MCP server with 31 tools covering the colony, the player's focus, pawns, threats, resources, the
   base, research, events, the world, the map, game data and mods.
+- Scenario, storyteller, difficulty and world settings tools on the first new game screens, on the
+  player's request.
 - Site search before a game starts, with filters for climate, terrain, water and caves, ranking by
   predicted mountain shape to find defensible crescents, and a tool that shows a site in the game.
 - Ideoligion help on the new game screens: every preset, meme and precept in the game, and a tool that

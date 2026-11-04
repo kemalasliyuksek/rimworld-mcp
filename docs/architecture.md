@@ -96,6 +96,13 @@ every settlement each time it is asked.
 Cave tunnels matter here too: `GenStep_CaveHives` places insect hives in them, in proportion to their
 size. A tile has tunnels only if it has a cave feature, so they can be filtered out exactly.
 
+## The first new game screens
+
+The scenario, storyteller and world settings screens keep their choices in private fields of the window,
+and use them only when the player presses Next. `configure_new_game` sets those fields through reflection,
+so the choices show up on screen and nothing else happens. A missing field fails loudly, because that
+means the game changed.
+
 ## Setting up an ideoligion
 
 `configure_ideo` follows the game's own path. From the preset screen it calls the same method as the

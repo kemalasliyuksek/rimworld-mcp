@@ -202,6 +202,38 @@ export const tools: readonly ToolDefinition[] = [
     inputSchema: {},
   },
   {
+    name: "get_new_game_setup",
+    title: "New game screens",
+    description:
+      "On the scenario, storyteller or world settings screen: which one is open, what is selected, and every option, including those from mods. Scenarios, storytellers, difficulties, all difficulty values, and the world settings.",
+    path: "/v1/new-game",
+    inputSchema: {},
+  },
+  {
+    name: "configure_new_game",
+    title: "Set up new game screen",
+    description:
+      "Only when the player asks. Sets choices on the scenario, storyteller or world settings screen, whichever is open, and only the parameters for that screen apply. The player sees the result and presses Next themselves.",
+    path: "/v1/new-game/configure",
+    acts: true,
+    inputSchema: {
+      scenario: z.string().optional().describe("Scenario screen: the scenario's name."),
+      storyteller: z.string().optional().describe("Storyteller screen: StorytellerDef defName."),
+      difficulty: z.string().optional().describe("Storyteller screen: DifficultyDef defName."),
+      difficulty_values: z
+        .string()
+        .optional()
+        .describe("Storyteller screen: individual values, which switch to the custom difficulty, for example allowCaveHives:false,threatScale:0.8."),
+      seed: z.string().optional().describe("World screen."),
+      planet_coverage_pct: z.number().int().optional().describe("World screen: 30, 50 or 100."),
+      rainfall: z.string().optional().describe("World screen. See rainfall_options."),
+      temperature: z.string().optional().describe("World screen. See temperature_options."),
+      population: z.string().optional().describe("World screen. See population_options."),
+      landmark_density: z.string().optional().describe("World screen. See landmark_density_options."),
+      pollution_pct: z.number().int().min(0).max(100).optional().describe("World screen. Needs Biotech."),
+    },
+  },
+  {
     name: "get_world_settings",
     title: "World settings",
     description:
@@ -389,7 +421,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "edit_starting_pawn",
     title: "Edit a colonist",
     description:
-      "Only when the player explicitly asks to change specific attributes, since this goes beyond what the game normally allows. Directly sets the attributes you pass and leaves the others alone. Changing a backstory does not recalculate skills, so set those too if they should change. Find trait and backstory names with search_defs. It cannot change worn apparel, weapons, head or body shape yet.",
+      "Only when the player explicitly asks to change specific attributes, since this goes beyond what the game normally allows. Directly sets the attributes you pass and leaves the others alone. Changing a backstory does not recalculate skills, so set those too if they should change. Find trait and backstory names with search_defs. Implants that are not listed by a surgery recipe are rejected, and they replace the part they go on.",
     path: "/v1/starting-pawns/edit",
     acts: true,
     inputSchema: {
@@ -411,6 +443,12 @@ export const tools: readonly ToolDefinition[] = [
       favorite_color: z.string().optional().describe("ColorDef defName."),
       xenotype: z.string().optional().describe("XenotypeDef defName. Needs Biotech. Replaces the pawn's genes."),
       possessions: z.string().optional().describe("Items they bring, replacing the current list, for example MedicineIndustrial:5."),
+      head: z.string().optional().describe("HeadTypeDef defName."),
+      body: z.string().optional().describe("BodyTypeDef defName."),
+      clear_apparel: z.enum(["true"]).optional().describe("Removes everything they wear first."),
+      wear: z.string().optional().describe("Apparel ThingDef defNames, with a material if needed, for example Apparel_Parka:Cloth. Replaces anything it conflicts with."),
+      weapon: z.string().optional().describe("Weapon ThingDef defName, with a material if needed. Replaces the current one."),
+      add_implants: z.string().optional().describe("Comma-separated HediffDef defNames of surgical implants, such as BionicArm."),
     },
   },
   {

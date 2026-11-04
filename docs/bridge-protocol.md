@@ -52,7 +52,7 @@ Failure looks like this:
 | 403 | `forbidden_host`, `forbidden_origin` |
 | 404 | `not_found`, `unknown_endpoint` |
 | 405 | `method_not_allowed` |
-| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site`, `not_configuring_ideo`, `ideology_not_active`, `not_choosing_colonists` |
+| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site`, `not_configuring_ideo`, `ideology_not_active`, `not_choosing_colonists`, `not_on_new_game_screen` |
 | 429 | `too_many_requests` |
 | 500 | `internal_error` |
 | 503 | `game_busy`, `game_not_responding` |
@@ -78,6 +78,8 @@ Failure looks like this:
 | `/v1/map/cell` | `x`, `z`, `map` | `inspect_cell` |
 | `/v1/defs/search` | `q`, `type`, `limit` | `search_defs` |
 | `/v1/defs/get` | `def`, `type` | `get_def` |
+| `/v1/new-game` | | `get_new_game_setup` |
+| `POST /v1/new-game/configure` | See `docs/tools.md` | `configure_new_game` |
 | `/v1/sites/world` | | `get_world_settings` |
 | `/v1/sites/search` | See `docs/tools.md` | `search_sites` |
 | `/v1/sites/get` | `tile` | `get_site` |

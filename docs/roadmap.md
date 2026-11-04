@@ -22,8 +22,8 @@ Plans can change. Feedback and ideas are welcome in the issues.
 - [x] Find, swap and edit colonists on request
 - [ ] Fluid ideoligions, and adding relics, buildings and apparel desires
 - [ ] Letting the assistant see icons, not just their names
-- [ ] Colonists' worn apparel, weapons, implants, head and body shape
-- [ ] The scenario, storyteller and world settings screens
+- [x] The scenario, storyteller and world settings screens
+- [ ] Faction choices in the world settings
 
 ## Actions (next)
 

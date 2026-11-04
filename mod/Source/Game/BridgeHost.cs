@@ -70,6 +70,8 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/map/cell", MapEndpoints.Cell);
             Register(endpoints, "/v1/defs/search", DefEndpoints.Search);
             Register(endpoints, "/v1/defs/get", DefEndpoints.Get);
+            Register(endpoints, "/v1/new-game", NewGameEndpoints.Setup);
+            Register(endpoints, "/v1/new-game/configure", NewGameEndpoints.Configure, "POST");
             Register(endpoints, "/v1/sites/world", SiteEndpoints.WorldSettings);
             Register(endpoints, "/v1/sites/search", SiteEndpoints.Search);
             Register(endpoints, "/v1/sites/get", SiteEndpoints.Get);

@@ -40,6 +40,7 @@ describe("MCP server", () => {
     for (const tool of listed) {
       expect(tool.annotations?.readOnlyHint, tool.name).toBe(
         ![
+          "configure_new_game",
           "show_site",
           "set_start_options",
           "configure_ideo",

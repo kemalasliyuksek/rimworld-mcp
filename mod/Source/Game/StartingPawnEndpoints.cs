@@ -483,6 +483,13 @@ namespace RimWorldMcp.Bridge.Game
             private ColorDef favoriteColor;
             private XenotypeDef xenotype;
             private List<ThingDefCount> possessions;
+            private HeadTypeDef head;
+            private BodyTypeDef body;
+            private ThingDef weapon;
+            private ThingDef weaponStuff;
+            private bool clearApparel;
+            private readonly List<(ThingDef Apparel, ThingDef Stuff)> wear = new List<(ThingDef, ThingDef)>();
+            private readonly List<HediffDef> implants = new List<HediffDef>();
 
             public static PawnEdit Validate(Pawn pawn, QueryParams query)
             {
@@ -541,6 +548,28 @@ namespace RimWorldMcp.Bridge.Game
                     throw new BadRequestException("Changing xenotype needs the Biotech expansion.");
                 }
 
+                edit.head = ResolveStyleDef<HeadTypeDef>(query.GetString("head"));
+                edit.body = ResolveStyleDef<BodyTypeDef>(query.GetString("body"));
+                edit.clearApparel = query.GetString("clear_apparel") == "true";
+                foreach (string entry in query.GetList("wear"))
+                {
+                    edit.wear.Add(ResolveMadeThing(entry, t => t.IsApparel, "apparel"));
+                }
+                string weaponName = query.GetString("weapon");
+                if (weaponName != null)
+                {
+                    (edit.weapon, edit.weaponStuff) = ResolveMadeThing(weaponName, t => t.IsWeapon && t.equipmentType == EquipmentType.Primary, "weapon");
+                }
+                foreach (string name in query.GetList("add_implants"))
+                {
+                    HediffDef implant = ResolveStyleDef<HediffDef>(name);
+                    if (FindImplantRecipe(implant) == null)
+                    {
+                        throw new BadRequestException($"'{name}' is not an implant that surgery can install.");
+                    }
+                    edit.implants.Add(implant);
+                }
+
                 List<(string Name, string Value)> items = query.GetPairs("possessions");
                 if (items.Count > 0)
                 {
@@ -570,6 +599,48 @@ namespace RimWorldMcp.Bridge.Game
                 }
                 return DefDatabase<T>.GetNamedSilentFail(name)
                     ?? throw new NotFoundException($"No {typeof(T).Name} named '{name}'. Find names with search_defs.");
+            }
+
+            private static (ThingDef, ThingDef) ResolveMadeThing(string entry, Func<ThingDef, bool> isRightKind, string kind)
+            {
+                string[] parts = entry.Split(':');
+                ThingDef thing = ResolveStyleDef<ThingDef>(parts[0].Trim());
+                if (!isRightKind(thing))
+                {
+                    throw new BadRequestException($"'{thing.defName}' is not {kind}.");
+                }
+                ThingDef stuff = parts.Length > 1 ? ResolveStyleDef<ThingDef>(parts[1].Trim()) : null;
+                if (thing.MadeFromStuff)
+                {
+                    stuff = stuff ?? GenStuff.DefaultStuffFor(thing);
+                    if (!stuff.IsStuff || !stuff.stuffProps.CanMake(thing))
+                    {
+                        throw new BadRequestException($"'{thing.defName}' cannot be made from '{stuff.defName}'.");
+                    }
+                }
+                else if (stuff != null)
+                {
+                    throw new BadRequestException($"'{thing.defName}' is not made from a material.");
+                }
+                return (thing, stuff);
+            }
+
+            private static RecipeDef FindImplantRecipe(HediffDef implant)
+            {
+                return DefDatabase<RecipeDef>.AllDefs.FirstOrDefault(r => r.addsHediff == implant && r.targetsBodyPart);
+            }
+
+            private static void InstallImplant(Pawn pawn, HediffDef implant)
+            {
+                RecipeDef recipe = FindImplantRecipe(implant);
+                BodyPartRecord part = pawn.health.hediffSet.GetNotMissingParts()
+                    .FirstOrDefault(p => recipe.appliedOnFixedBodyParts.Contains(p.def)
+                        && !pawn.health.hediffSet.hediffs.Any(h => h.def == implant && h.Part == p));
+                if (part == null && recipe.appliedOnFixedBodyParts.Count > 0)
+                {
+                    return;
+                }
+                pawn.health.AddHediff(implant, part);
             }
 
             private static BackstoryDef ResolveBackstory(string name, BackstorySlot slot)
@@ -716,6 +787,37 @@ namespace RimWorldMcp.Bridge.Game
                 if (possessions != null)
                 {
                     Find.GameInitData.startingPossessions[pawn] = possessions;
+                }
+                if (head != null)
+                {
+                    pawn.story.headType = head;
+                }
+                if (body != null)
+                {
+                    pawn.story.bodyType = body;
+                }
+                foreach (HediffDef implant in implants)
+                {
+                    InstallImplant(pawn, implant);
+                }
+                if (clearApparel)
+                {
+                    pawn.apparel?.DestroyAll();
+                }
+                foreach ((ThingDef thing, ThingDef stuff) in wear)
+                {
+                    var apparel = (Apparel)ThingMaker.MakeThing(thing, stuff);
+                    foreach (Apparel worn in pawn.apparel.WornApparel.Where(a => !ApparelUtility.CanWearTogether(a.def, thing, pawn.RaceProps.body)).ToList())
+                    {
+                        pawn.apparel.Remove(worn);
+                        worn.Destroy();
+                    }
+                    pawn.apparel.Wear(apparel, dropReplacedApparel: false);
+                }
+                if (weapon != null)
+                {
+                    pawn.equipment.DestroyAllEquipment();
+                    pawn.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(weapon, weaponStuff));
                 }
 
                 // Backstories and traits can change which work and skills are disabled.
