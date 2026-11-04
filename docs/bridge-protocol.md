@@ -1,0 +1,80 @@
+# Bridge protocol
+
+This is the private protocol between the mod and the MCP server. It may change between versions, so
+other programs should use MCP instead.
+
+## Discovery
+
+On launch, the mod writes `~/.rimworld-mcp/bridge.json` and removes it on exit. Set
+`RIMWORLD_MCP_DISCOVERY_FILE` on the MCP server to read it from another location, for example when
+Steam runs in a Flatpak with its own home directory.
+
+```json
+{
+  "format_version": 1,
+  "port": 41234,
+  "token": "64 hexadecimal characters",
+  "bridge_version": "0.1.0",
+  "process_id": 12345
+}
+```
+
+The port and token change on every launch. A crash can leave the file behind, and in that case the
+connection to the port fails.
+
+## Requests
+
+```http
+GET /v1/overview?map=0 HTTP/1.1
+Host: 127.0.0.1:41234
+Authorization: Bearer <token>
+```
+
+- Only `GET` is accepted.
+- `Host` must be exactly `127.0.0.1:<port>`.
+- Requests with an `Origin` header are rejected.
+
+## Responses
+
+Success is status 200 with a JSON body. Keys use `snake_case`, and fields that do not apply may be
+missing.
+
+Failure looks like this:
+
+```json
+{ "error": { "code": "no_game_loaded", "message": "No game is loaded. The player is at the main menu." } }
+```
+
+| Status | Codes |
+| --- | --- |
+| 400 | `bad_request` |
+| 401 | `unauthorized` |
+| 403 | `forbidden_host`, `forbidden_origin` |
+| 404 | `not_found`, `unknown_endpoint` |
+| 405 | `method_not_allowed` |
+| 409 | `no_game_loaded`, `no_map` |
+| 429 | `too_many_requests` |
+| 500 | `internal_error` |
+| 503 | `game_busy`, `game_not_responding` |
+
+## Endpoints
+
+| Path | Parameters | MCP tool |
+| --- | --- | --- |
+| `/v1/status` | | `get_game_status` |
+| `/v1/mods` | | `list_mods` |
+| `/v1/overview` | `map` | `get_colony_overview` |
+| `/v1/alerts` | | `get_alerts` |
+| `/v1/focus` | | `get_player_focus` |
+| `/v1/pawns` | `group`, `limit`, `map` | `list_pawns` |
+| `/v1/pawn` | `id` | `get_pawn` |
+| `/v1/threats` | `map` | `get_threats` |
+| `/v1/resources` | `map` | `get_resources` |
+| `/v1/base` | `sections`, `map` | `get_base` |
+| `/v1/research` | `limit` | `get_research` |
+| `/v1/events` | `limit` | `get_recent_events` |
+| `/v1/world` | | `get_world` |
+| `/v1/map/view` | `x`, `z`, `width`, `height`, `map` | `view_map` |
+| `/v1/map/cell` | `x`, `z`, `map` | `inspect_cell` |
+| `/v1/defs/search` | `q`, `type`, `limit` | `search_defs` |
+| `/v1/defs/get` | `def`, `type` | `get_def` |

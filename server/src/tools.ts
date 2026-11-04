@@ -1,0 +1,204 @@
+import { z } from "zod";
+
+export interface ToolDefinition {
+  name: string;
+  title: string;
+  description: string;
+  /** Bridge endpoint. The tool's arguments become its query string. */
+  path: string;
+  inputSchema: z.ZodRawShape;
+}
+
+const mapParam = z
+  .number()
+  .int()
+  .min(0)
+  .optional()
+  .describe("Map id. Defaults to the map the player is currently looking at.");
+
+export const tools: readonly ToolDefinition[] = [
+  {
+    name: "get_colony_overview",
+    title: "Colony overview",
+    description:
+      "Start here for any question about the player's game. Returns date, season, weather, colonist count and mood, days of food, threats, current research, active alerts and unread letters.",
+    path: "/v1/overview",
+    inputSchema: { map: mapParam },
+  },
+  {
+    name: "get_player_focus",
+    title: "Player focus",
+    description:
+      'What the player is looking at right now: selected pawns and things, camera area, open windows, and the text and choices of any event dialog on screen. Use it to work out what "this" or "that" means, and whenever the player asks what to do about a decision they are facing.',
+    path: "/v1/focus",
+    inputSchema: {},
+  },
+  {
+    name: "get_alerts",
+    title: "Active alerts",
+    description:
+      "The alerts on the right side of the screen, with the game's full explanation of each. The overview only has their labels.",
+    path: "/v1/alerts",
+    inputSchema: {},
+  },
+  {
+    name: "list_pawns",
+    title: "List pawns",
+    description:
+      "Compact list of a group of pawns: position, health, mood, current activity and best skills. Passions are marked * (minor) and ** (major). The colonists group spans all maps and caravans; the other groups cover one map.",
+    path: "/v1/pawns",
+    inputSchema: {
+      group: z
+        .enum([
+          "colonists",
+          "prisoners",
+          "slaves",
+          "animals",
+          "mechanoids",
+          "hostiles",
+          "visitors",
+          "wildlife",
+        ])
+        .optional()
+        .describe("Defaults to colonists."),
+      limit: z.number().int().min(1).max(500).optional(),
+      map: mapParam,
+    },
+  },
+  {
+    name: "get_pawn",
+    title: "Pawn details",
+    description:
+      "Everything the player can see about one pawn: background, traits, skills and passions, needs, each mood thought, health conditions, capacities, gear, work priorities (1 is highest, 0 is off), schedule and relations.",
+    path: "/v1/pawn",
+    inputSchema: {
+      id: z.string().min(1).describe("Pawn id from list_pawns, or the pawn's name."),
+    },
+  },
+  {
+    name: "get_threats",
+    title: "Threats and defenses",
+    description:
+      "Visible enemies grouped by faction and kind, with their location and weapons, plus the colony's fighters and turrets. Use it for raids and any defense question.",
+    path: "/v1/threats",
+    inputSchema: { map: mapParam },
+  },
+  {
+    name: "get_resources",
+    title: "Resources",
+    description:
+      "Stored items by category, silver, wealth breakdown (which drives raid size), and the weapons and apparel in storage.",
+    path: "/v1/resources",
+    inputSchema: { map: mapParam },
+  },
+  {
+    name: "get_base",
+    title: "Base layout",
+    description:
+      "The colony's infrastructure: rooms with their stats, power grids, stockpile and growing zones with crop progress, work benches with their bills, and beds.",
+    path: "/v1/base",
+    inputSchema: {
+      sections: z
+        .string()
+        .optional()
+        .describe(
+          "Comma-separated subset of rooms, power, zones, production, beds. Defaults to all of them.",
+        ),
+      map: mapParam,
+    },
+  },
+  {
+    name: "get_research",
+    title: "Research",
+    description: "The current project and the projects that can be started now, cheapest first.",
+    path: "/v1/research",
+    inputSchema: {
+      limit: z.number().int().min(1).max(500).optional(),
+    },
+  },
+  {
+    name: "get_recent_events",
+    title: "Recent events",
+    description:
+      "The game's history of letters and messages, newest first, including events from before this session. Use it to find out what just happened or why something changed.",
+    path: "/v1/events",
+    inputSchema: {
+      limit: z.number().int().min(1).max(200).optional(),
+    },
+  },
+  {
+    name: "get_world",
+    title: "World state",
+    description:
+      "Everything beyond the current map: factions and goodwill, quests, caravans, all open maps, and the colony's ideoligion.",
+    path: "/v1/world",
+    inputSchema: {},
+  },
+  {
+    name: "view_map",
+    title: "View map",
+    description:
+      "Renders part of the map as text, with a legend, so you can reason about layout and positions without a screenshot. Defaults to the area around the player's camera.",
+    path: "/v1/map/view",
+    inputSchema: {
+      x: z.number().int().optional().describe("West edge of the area."),
+      z: z.number().int().optional().describe("South edge of the area."),
+      width: z.number().int().min(1).max(120).optional().describe("Defaults to 60."),
+      height: z.number().int().min(1).max(120).optional().describe("Defaults to 60."),
+      map: mapParam,
+    },
+  },
+  {
+    name: "inspect_cell",
+    title: "Inspect cell",
+    description:
+      "Everything visible on one map cell: terrain, fertility, roof, temperature, room, zone and things.",
+    path: "/v1/map/cell",
+    inputSchema: {
+      x: z.number().int().min(0),
+      z: z.number().int().min(0),
+      map: mapParam,
+    },
+  },
+  {
+    name: "search_defs",
+    title: "Search game data",
+    description:
+      "Searches the game's definitions by name, label or description: items, buildings, research, recipes, traits, diseases and more. Covers the base game, DLCs and every active mod, in the player's language. Use it instead of relying on memory, since mods can change anything.",
+    path: "/v1/defs/search",
+    inputSchema: {
+      q: z.string().min(1).describe("Text to search for."),
+      type: z.string().optional().describe("Limit to a def type, such as ThingDef or RecipeDef."),
+      limit: z.number().int().min(1).max(100).optional(),
+    },
+  },
+  {
+    name: "get_def",
+    title: "Game data details",
+    description:
+      "The full data of one definition as the running game sees it, with all mod patches applied: stats, costs, requirements and so on. Find names with search_defs.",
+    path: "/v1/defs/get",
+    inputSchema: {
+      def: z.string().min(1).describe("Exact defName."),
+      type: z
+        .string()
+        .optional()
+        .describe("Def type. Only needed when several types share the name."),
+    },
+  },
+  {
+    name: "list_mods",
+    title: "Active mods",
+    description: "The mods running in the player's game, in load order.",
+    path: "/v1/mods",
+    inputSchema: {},
+  },
+  {
+    name: "get_game_status",
+    title: "Connection status",
+    description:
+      "Checks the connection to the game and reports versions, language, and whether a game is loaded or the player is at the main menu.",
+    path: "/v1/status",
+    inputSchema: {},
+  },
+];

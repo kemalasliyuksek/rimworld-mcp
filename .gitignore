@@ -1,0 +1,31 @@
+# Decompiled game code. The RimWorld EULA forbids redistributing it: never commit.
+.decompiled/
+
+# Local tools
+.tools/
+
+# .NET
+bin/
+obj/
+*.user
+
+# Node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Build output of the mod. The packaged mod is produced by the build, not stored.
+mod/*/Assemblies/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+.mcp.json
+.claude/settings.local.json
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store

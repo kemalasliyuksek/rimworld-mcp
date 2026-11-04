@@ -1,0 +1,51 @@
+{
+  "name": "rimworld-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server that lets AI assistants observe a running game of RimWorld.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "rimworld",
+    "claude",
+    "ai"
+  ],
+  "license": "MIT",
+  "author": "Kemal Aslıyüksek",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kemalasliyuksek/rimworld-mcp.git",
+    "directory": "server"
+  },
+  "type": "module",
+  "bin": {
+    "rimworld-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "26.13.0",
+      "onFail": "download"
+    }
+  }
+}

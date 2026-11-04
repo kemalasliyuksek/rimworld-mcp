@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>RimWorldMcp.Bridge</AssemblyName>
+    <RootNamespace>RimWorldMcp.Bridge</RootNamespace>
+    <Version>0.1.0</Version>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DebugType>none</DebugType>
+    <OutputPath>../1.6/Assemblies/</OutputPath>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <!--
+    The game's assemblies are referenced from the local install and never copied or committed.
+    Override the location with: dotnet build -p:RimWorldDir=/path/to/RimWorld
+  -->
+  <PropertyGroup>
+    <RimWorldDir Condition="'$(RimWorldDir)' == '' And '$(RIMWORLD_DIR)' != ''">$(RIMWORLD_DIR)</RimWorldDir>
+    <RimWorldDir Condition="'$(RimWorldDir)' == '' And Exists('$(HOME)/.local/share/Steam/steamapps/common/RimWorld')">$(HOME)/.local/share/Steam/steamapps/common/RimWorld</RimWorldDir>
+    <RimWorldDir Condition="'$(RimWorldDir)' == '' And Exists('C:\Program Files (x86)\Steam\steamapps\common\RimWorld')">C:\Program Files (x86)\Steam\steamapps\common\RimWorld</RimWorldDir>
+    <RimWorldManaged Condition="Exists('$(RimWorldDir)/RimWorldLinux_Data/Managed')">$(RimWorldDir)/RimWorldLinux_Data/Managed</RimWorldManaged>
+    <RimWorldManaged Condition="Exists('$(RimWorldDir)/RimWorldWin64_Data/Managed')">$(RimWorldDir)/RimWorldWin64_Data/Managed</RimWorldManaged>
+    <RimWorldManaged Condition="Exists('$(RimWorldDir)/RimWorldMac.app/Contents/Resources/Data/Managed')">$(RimWorldDir)/RimWorldMac.app/Contents/Resources/Data/Managed</RimWorldManaged>
+  </PropertyGroup>
+
+  <Target Name="CheckRimWorldInstall" BeforeTargets="ResolveAssemblyReferences" Condition="'$(RimWorldManaged)' == ''">
+    <Error Text="RimWorld was not found. Set it with -p:RimWorldDir=/path/to/RimWorld or the RIMWORLD_DIR environment variable." />
+  </Target>
+
+  <ItemGroup>
+    <Compile Include="Core/**/*.cs" />
+    <Compile Include="Game/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(RimWorldManaged)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(RimWorldManaged)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(RimWorldManaged)/UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(RimWorldManaged)/UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
