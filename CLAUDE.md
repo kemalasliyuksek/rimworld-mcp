@@ -8,7 +8,8 @@ Lets AI assistants observe a running game of RimWorld through MCP. Open source, 
 - `docs/`: architecture, tools, bridge protocol and roadmap.
 
 Read the rules in `CONTRIBUTING.md` before changing the mod. They are hard constraints, above all:
-show only what the player can see, never change game state, and leave no trace in saves.
+show only what the player can see, never modify the game, only act on setup screens at the player's
+request, and leave no trace of the mod in saves.
 
 `MountainPredictor` must stay in step with the game's map generation, down to the order of its random
 calls. Recheck it against `.decompiled/game` after any game update.

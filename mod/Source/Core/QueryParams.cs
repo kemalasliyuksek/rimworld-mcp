@@ -42,6 +42,26 @@ namespace RimWorldMcp.Bridge.Core
             return GetString(name) ?? throw new BadRequestException($"Missing required parameter '{name}'.");
         }
 
+        /// <summary>A comma-separated value as a list, which is empty when the parameter is absent.</summary>
+        public List<string> GetList(string name)
+        {
+            var result = new List<string>();
+            string raw = GetString(name);
+            if (raw == null)
+            {
+                return result;
+            }
+            foreach (string item in raw.Split(','))
+            {
+                string trimmed = item.Trim();
+                if (trimmed.Length > 0)
+                {
+                    result.Add(trimmed);
+                }
+            }
+            return result;
+        }
+
         public int GetInt(string name, int fallback, int min, int max)
         {
             string raw = GetString(name);

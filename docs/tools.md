@@ -1,7 +1,7 @@
 # Tools
 
-All tools are read-only, except for `show_site`, which moves the camera and the selection on the site
-selection screen. Those marked with `map` accept an optional map id and default to the map the player
+All tools are read-only, except for `show_site` and `configure_ideo`, which act on the new game screens
+when the player asks. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -81,6 +81,14 @@ Or a flat site next to water, with caves to explore:
 }
 ```
 
+## Ideoligion
+
+| Tool | Purpose |
+| --- | --- |
+| `get_ideo_options` (`section`, `issue`) | Presets, memes, precept topics and the precepts of a topic, including those from mods. |
+| `get_ideo_setup` | The current screen and the ideoligion being edited, with anything that blocks continuing. |
+| `configure_ideo` (`preset` or `memes`, `structure`, `precepts`, `name`) | Builds the ideoligion with the game's generator and applies precepts. Only when the player asks. The player presses Next. |
+
 ## Connection
 
 | Tool | Purpose |
@@ -97,6 +105,8 @@ Failures come back as tool errors in the form `code: message`:
 | `no_game_loaded` | The player is at the main menu or still setting up a game. |
 | `no_world` | No world has been generated yet. |
 | `not_selecting_site` | `show_site` was called outside the site selection screen. |
+| `not_configuring_ideo` | `configure_ideo` was called outside the ideoligion screens. |
+| `ideology_not_active` | The game does not have the Ideology expansion. |
 | `game_busy` | The game is loading or saving. Try again shortly. |
 | `game_not_responding` | The game's main thread did not answer in time, usually because the window is in the background with "Run in background" turned off. |
 | `not_found`, `bad_request` | The arguments do not match anything, or are invalid. |

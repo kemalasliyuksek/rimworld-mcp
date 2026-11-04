@@ -35,6 +35,12 @@ confirm by pressing Next.
 The mountain shapes come from the same noise the game uses to generate the map, so there is usually
 no need to reroll seeds at all.
 
+## Skip the ideoligion maze
+
+Not sure what to pick? The assistant asks how you want to play, explains the options your game really
+offers, including those from mods, and can set the whole ideoligion up for you if you ask. It stays on
+screen for you to review before you press Next.
+
 ## Fair play by design
 
 During play, the bridge reports only what you can see yourself. Unexplored areas, invisible enemies
@@ -44,8 +50,9 @@ shoulder and not a cheat.
 There is one deliberate exception, before a game begins: site search predicts the rock layout of a
 tile, as map preview mods do. It reveals nothing else about the map, such as ores or ruins.
 
-Version 0.1 also cannot change your game. The only thing it can do is move the camera and the
-selection on the site selection screen, and you still confirm the choice yourself.
+It never touches the game's code or files, and while you play it only observes. On the new game
+screens it can act for you if you ask: move the camera to a site, or set up your ideoligion. You still
+review the result and press Next yourself.
 
 ## Safe for your save
 

@@ -6,8 +6,8 @@ export interface ToolDefinition {
   description: string;
   /** Bridge endpoint. The tool's arguments become its query string. */
   path: string;
-  /** Set for the rare tool that changes something. Everything else reads with GET. */
-  changesUiState?: true;
+  /** Set for the rare tool that acts on the player's request. Everything else reads with GET. */
+  acts?: true;
   inputSchema: z.ZodRawShape;
 }
 
@@ -276,9 +276,46 @@ export const tools: readonly ToolDefinition[] = [
     description:
       "On the site selection screen, moves the player's camera to a tile and selects it, so they can see it without hunting for it on the globe. It also zooms in if the camera is far away. It changes nothing else, and the player still confirms the choice themselves. Call it for the site you recommend.",
     path: "/v1/sites/show",
-    changesUiState: true,
+    acts: true,
     inputSchema: {
       tile: z.number().int().min(0).describe("Tile id from search_sites."),
+    },
+  },
+  {
+    name: "get_ideo_options",
+    title: "Ideoligion options",
+    description:
+      'What an ideoligion can be built from, including anything added by mods. The presets and memes sections describe the big choices. For precepts, use the issues section to see the topics, then the precepts section with an issue. Works on the new game screens and during a game.',
+    path: "/v1/ideo/options",
+    inputSchema: {
+      section: z.enum(["presets", "memes", "issues", "precepts"]).optional().describe("Defaults to presets."),
+      issue: z.string().optional().describe("Issue defName. Required for the precepts section."),
+    },
+  },
+  {
+    name: "get_ideo_setup",
+    title: "Current ideoligion setup",
+    description:
+      "Which new game ideoligion screen the player is on and the ideoligion being edited, with its memes and precepts, and any problems that would stop the player from continuing.",
+    path: "/v1/ideo/setup",
+    inputSchema: {},
+  },
+  {
+    name: "configure_ideo",
+    title: "Set up ideoligion",
+    description:
+      "Only call this when the player asks you to set up their ideoligion for them. Works on the new game ideoligion screens. Builds an ideoligion with the game's own generator from a preset or memes, then applies any precepts you list, each replacing the current choice on its issue. It replaces whatever ideoligion is being edited, and can be called again to adjust it. The result stays on screen for the player, who presses Next themselves. The game fills in rituals, roles and styles, so read rejected_precepts and problems in the result and tell the player what you chose and why.",
+    path: "/v1/ideo/configure",
+    acts: true,
+    inputSchema: {
+      preset: z.string().optional().describe("IdeoPresetDef defName. Pass this or memes."),
+      memes: z.string().optional().describe("Comma-separated MemeDef defNames. Pass this or preset."),
+      structure: z
+        .string()
+        .optional()
+        .describe("Structure meme defName. If there is none, the game picks one at random."),
+      precepts: z.string().optional().describe("Comma-separated PreceptDef defNames to apply."),
+      name: z.string().optional().describe("Name for the ideoligion. The game generates one if omitted."),
     },
   },
   {

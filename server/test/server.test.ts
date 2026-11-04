@@ -33,12 +33,14 @@ describe("MCP server", () => {
     await client.connect(clientTransport);
   });
 
-  it("offers every tool, and only show_site is not read-only", async () => {
+  it("offers every tool, and only the setup tools are not read-only", async () => {
     const { tools: listed } = await client.listTools();
 
     expect(listed.map((t) => t.name).sort()).toEqual(tools.map((t) => t.name).sort());
     for (const tool of listed) {
-      expect(tool.annotations?.readOnlyHint, tool.name).toBe(tool.name !== "show_site");
+      expect(tool.annotations?.readOnlyHint, tool.name).toBe(
+        !["show_site", "configure_ideo"].includes(tool.name),
+      );
       expect(tool.annotations?.destructiveHint, tool.name).toBe(false);
       expect(tool.description, tool.name).toBeTruthy();
     }
@@ -61,12 +63,14 @@ describe("MCP server", () => {
     expect(result.content).toEqual([{ type: "text", text: '{"ok":true}' }]);
   });
 
-  it("sends show_site as a POST, and every other tool as a GET", async () => {
+  it("sends the setup tools as POST, and every other tool as a GET", async () => {
     await client.callTool({ name: "show_site", arguments: { tile: 42 } });
+    await client.callTool({ name: "configure_ideo", arguments: { preset: "Unity_Family" } });
     await client.callTool({ name: "search_sites", arguments: { caves: "exclude", shape: "crescent" } });
 
     expect(bridge.calls).toEqual([
       { method: "POST", path: "/v1/sites/show", params: { tile: 42 } },
+      { method: "POST", path: "/v1/ideo/configure", params: { preset: "Unity_Family" } },
       { method: "GET", path: "/v1/sites/search", params: { caves: "exclude", shape: "crescent" } },
     ]);
   });

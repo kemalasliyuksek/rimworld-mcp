@@ -30,7 +30,7 @@ Host: 127.0.0.1:41234
 Authorization: Bearer <token>
 ```
 
-- All endpoints use `GET`, except `/v1/sites/show`, which uses `POST`.
+- All endpoints use `GET`, except `/v1/sites/show` and `/v1/ideo/configure`, which use `POST`.
 - `Host` must be exactly `127.0.0.1:<port>`.
 - Requests with an `Origin` header are rejected.
 
@@ -52,7 +52,7 @@ Failure looks like this:
 | 403 | `forbidden_host`, `forbidden_origin` |
 | 404 | `not_found`, `unknown_endpoint` |
 | 405 | `method_not_allowed` |
-| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site` |
+| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site`, `not_configuring_ideo`, `ideology_not_active` |
 | 429 | `too_many_requests` |
 | 500 | `internal_error` |
 | 503 | `game_busy`, `game_not_responding` |
@@ -82,3 +82,6 @@ Failure looks like this:
 | `/v1/sites/search` | See `docs/tools.md` | `search_sites` |
 | `/v1/sites/get` | `tile` | `get_site` |
 | `POST /v1/sites/show` | `tile` | `show_site` |
+| `/v1/ideo/options` | `section`, `issue` | `get_ideo_options` |
+| `/v1/ideo/setup` | | `get_ideo_setup` |
+| `POST /v1/ideo/configure` | `preset`, `memes`, `structure`, `precepts`, `name` | `configure_ideo` |

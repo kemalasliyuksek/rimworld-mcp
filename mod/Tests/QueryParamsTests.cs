@@ -45,6 +45,18 @@ namespace RimWorldMcp.Bridge.Tests
         }
 
         [Fact]
+        public void ListsSplitOnCommasAndIgnoreBlanks()
+        {
+            Assert.Equal(new[] { "Loyalist", "Supremacist" }, QueryParams.Parse("memes=Loyalist%2C%20Supremacist%2C").GetList("memes"));
+        }
+
+        [Fact]
+        public void AnAbsentListIsEmpty()
+        {
+            Assert.Empty(QueryParams.Parse("").GetList("memes"));
+        }
+
+        [Fact]
         public void MissingRequiredParametersAreRejected()
         {
             QueryParams query = QueryParams.Parse("");

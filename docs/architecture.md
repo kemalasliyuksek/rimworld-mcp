@@ -96,6 +96,15 @@ every settlement each time it is asked.
 Cave tunnels matter here too: `GenStep_CaveHives` places insect hives in them, in proportion to their
 size. A tile has tunnels only if it has a cave feature, so they can be filtered out exactly.
 
+## Setting up an ideoligion
+
+`configure_ideo` follows the game's own path. From the preset screen it calls the same method as the
+"customize" option, because that opens a screen where the player can review everything. It builds the
+ideoligion with `IdeoGenerator`, the same generator the preset screen uses, and swaps precepts with the
+methods the precept menu uses, which also enforces the game's rules. All names are checked before
+anything changes, so a mistake cannot leave the screen half configured. It never presses Next: the game
+runs its own validation then, and the tool reports the same checks in advance.
+
 ## The MCP server
 
 - `discovery.ts` reads the discovery file.

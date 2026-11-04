@@ -15,9 +15,15 @@ Plans can change. Feedback and ideas are welcome in the issues.
 - [ ] Screenshot tool, for when text is not enough
 - [ ] More data as real questions reveal gaps: trade, caravan details, Anomaly and Odyssey systems
 
+## Setup help
+
+- [x] Choose a site and move the camera to it
+- [x] Set up the ideoligion on request
+- [ ] Fluid ideoligions, styles, and more of the other new game screens
+
 ## Actions (next)
 
-Optional control of the game, off by default.
+Optional control of the game during play, off by default.
 
 - [ ] Player-level actions only, the same things a player could do by hand, such as work priorities,
       research, bills and zones

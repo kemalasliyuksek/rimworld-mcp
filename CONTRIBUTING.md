@@ -10,10 +10,11 @@ accepted:
 1. **Show only what the player can see.** New data must respect fog of war, hidden conditions and
    invisibility. Use the helpers in `mod/Source/Game/GameAccess.cs`. The one exception is the
    predicted rock layout in site search, before a game starts.
-2. **The bridge must not change the game.** No writes, no gameplay side effects, and no consumption
-   of the game's random numbers. All endpoints run inside `Rand.PushState()`. The only endpoint that
-   changes anything is `show_site`, which moves the camera and selection before a game starts.
-   Anything else that changes state belongs to the planned actions work, not to a read endpoint.
+2. **Never modify the game, and only observe during play.** Do not touch the game's code or files. Read
+   endpoints have no gameplay side effects and do not consume the game's random numbers: all endpoints
+   run inside `Rand.PushState()`. On the new game screens, tools may set things up, but only when the
+   player asks, using `POST`, taking the same steps as the game's own buttons, and always leaving the
+   final confirmation to the player. Those are `show_site` and `configure_ideo` so far.
 3. **No save footprint.** Do not add defs, game components or anything else that ends up in a save.
 4. **No required third-party mods or libraries in the mod.** That includes Harmony. Use reflection
    for the occasional private field.
