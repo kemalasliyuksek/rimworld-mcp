@@ -13,9 +13,11 @@ namespace RimWorldMcp.Bridge.Game
         public static void Resources(QueryParams query, JsonWriter json)
         {
             Map map = GameAccess.ResolveMap(query);
+            List<Thing> onGround = GameAccess.VisibleUnstoredItems(map).ToList();
 
             json.BeginObject();
-            json.Prop("silver", map.resourceCounter.Silver);
+            json.Prop("silver_stored", map.resourceCounter.Silver);
+            json.Prop("silver_on_ground", onGround.Where(t => t.def == ThingDefOf.Silver).Sum(t => t.stackCount));
             json.Prop("wealth_total", map.wealthWatcher.WealthTotal);
             json.Prop("wealth_items", map.wealthWatcher.WealthItems);
             json.Prop("wealth_buildings", map.wealthWatcher.WealthBuildings);
@@ -46,7 +48,38 @@ namespace RimWorldMcp.Bridge.Game
             // The resource counter leaves these out because each one has its own quality and condition.
             WriteEquipment(json, "weapons", map, ThingRequestGroup.Weapon);
             WriteEquipment(json, "apparel", map, ThingRequestGroup.Apparel);
+            WriteOnGround(json, onGround);
             json.EndObject();
+        }
+
+        private static void WriteOnGround(JsonWriter json, List<Thing> items)
+        {
+            json.Key("on_ground").BeginArray();
+            foreach (var category in items
+                .GroupBy(t => t.def)
+                .GroupBy(group => group.Key.FirstThingCategory?.LabelCap.ToString() ?? "Other")
+                .OrderBy(group => group.Key))
+            {
+                json.BeginObject();
+                json.Prop("category", category.Key);
+                json.Key("items").BeginArray();
+                foreach (IGrouping<ThingDef, Thing> item in category.OrderByDescending(group => group.Sum(t => t.stackCount)))
+                {
+                    json.BeginObject();
+                    json.Prop("label", item.Key.label);
+                    json.Prop("def", item.Key.defName);
+                    json.Prop("count", item.Sum(t => t.stackCount));
+                    int forbidden = item.Where(t => t.IsForbidden(Faction.OfPlayer)).Sum(t => t.stackCount);
+                    if (forbidden > 0)
+                    {
+                        json.Prop("forbidden", forbidden);
+                    }
+                    json.EndObject();
+                }
+                json.EndArray();
+                json.EndObject();
+            }
+            json.EndArray();
         }
 
         private static void WriteEquipment(JsonWriter json, string key, Map map, ThingRequestGroup group)

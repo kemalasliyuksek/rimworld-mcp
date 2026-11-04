@@ -127,6 +127,7 @@ namespace RimWorldMcp.Bridge.Game
         {
             private readonly JsonWriter json;
             private readonly HashSet<object> visited = new HashSet<object>();
+            private readonly Dictionary<Type, object> defaults = new Dictionary<Type, object>();
             private int nodes;
 
             public bool Truncated { get; private set; }
@@ -139,6 +140,7 @@ namespace RimWorldMcp.Bridge.Game
             public void WriteObjectFields(object target, int depth)
             {
                 visited.Add(target);
+                object fresh = DefaultsFor(target.GetType());
                 json.BeginObject();
                 foreach (FieldInfo field in target.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public))
                 {
@@ -155,7 +157,7 @@ namespace RimWorldMcp.Bridge.Game
                     {
                         continue;
                     }
-                    if (IsEmpty(value))
+                    if (IsEmpty(value) || IsDefault(field, value, fresh))
                     {
                         continue;
                     }
@@ -163,6 +165,32 @@ namespace RimWorldMcp.Bridge.Game
                     WriteValue(value, depth + 1);
                 }
                 json.EndObject();
+            }
+
+            // Most of a def is untouched defaults, which only bury what makes it different. The game's
+            // own XML loader runs these same constructors, so creating one here is no new risk.
+            private object DefaultsFor(Type type)
+            {
+                if (!defaults.TryGetValue(type, out object fresh))
+                {
+                    try
+                    {
+                        fresh = Activator.CreateInstance(type, nonPublic: true);
+                    }
+                    catch (Exception)
+                    {
+                        fresh = null;
+                    }
+                    defaults[type] = fresh;
+                }
+                return fresh;
+            }
+
+            private static bool IsDefault(FieldInfo field, object value, object fresh)
+            {
+                return fresh != null
+                    && (value is string || value.GetType().IsValueType)
+                    && Equals(value, field.GetValue(fresh));
             }
 
             private static bool IsInteresting(FieldInfo field)

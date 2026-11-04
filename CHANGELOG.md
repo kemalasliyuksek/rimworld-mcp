@@ -23,3 +23,15 @@ All notable changes to this project are documented here. The format is based on
   of a colonist's relations.
 - Pawn relations now follow the game's social tab: implied relations such as siblings are included, and
   relatives the player has not met are left out.
+- Visible items outside storage in `get_resources`, and counted in the overview's days of food, since
+  a new colony's supplies are not in storage yet.
+
+### Changed
+
+- `get_def` leaves out fields at their default value, which were most of its output.
+- `get_base` rejects unknown section names instead of ignoring them.
+
+### Fixed
+
+- Fertile, marshy and other tiles whose features only repaint the ground no longer report
+  `prediction_exact: false`.

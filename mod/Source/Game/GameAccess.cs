@@ -68,6 +68,16 @@ namespace RimWorldMcp.Bridge.Game
             return map.mapPawns.AllPawnsSpawned.Where(IsVisible);
         }
 
+        /// <summary>
+        /// Items the player can see outside storage. The game's resource counter leaves these out, so
+        /// without them a new colony's supplies, still lying where they landed, would look like nothing.
+        /// </summary>
+        public static IEnumerable<Thing> VisibleUnstoredItems(Map map)
+        {
+            return map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver)
+                .Where(t => t.def.category == ThingCategory.Item && IsVisible(t) && !t.IsInAnyStorage());
+        }
+
         /// <summary>The same check as the game's social tab, which hides relatives the player has not met.</summary>
         public static bool RelationIsVisible(Pawn pawn, Pawn other)
         {

@@ -183,17 +183,23 @@ namespace RimWorldMcp.Bridge.Game
 
         private static void WriteFood(JsonWriter json, Map map)
         {
-            float nutrition = map.resourceCounter.TotalHumanEdibleNutrition;
+            float stored = map.resourceCounter.TotalHumanEdibleNutrition;
+            // The same conditions as the game's resource counter, apart from being in storage.
+            float onGround = GameAccess.VisibleUnstoredItems(map)
+                .Where(t => t.def.CountAsResource && t.def.IsNutritionGivingIngestible && t.def.ingestible.HumanEdible
+                    && !t.IsNotFresh() && !t.IsForbidden(Faction.OfPlayer))
+                .Sum(t => t.def.GetStatValueAbstract(StatDefOf.Nutrition) * t.stackCount);
             float perDay = map.mapPawns.FreeColonistsAndPrisonersSpawned
                 .Where(p => p.needs?.food != null)
                 .Sum(p => p.needs.food.FoodFallPerTickAssumingCategory(HungerCategory.Fed, ignoreMalnutrition: true) * GameAccess.TicksPerDay);
 
             json.Key("food").BeginObject();
-            json.Prop("stored_nutrition", nutrition);
+            json.Prop("stored_nutrition", stored);
+            json.Prop("on_ground_nutrition", onGround);
             json.Prop("human_nutrition_per_day", perDay);
             if (perDay > 0f)
             {
-                json.Prop("days_of_food", nutrition / perDay);
+                json.Prop("days_of_food", (stored + onGround) / perDay);
             }
             json.EndObject();
         }

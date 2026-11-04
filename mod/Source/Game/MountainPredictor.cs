@@ -28,6 +28,15 @@ namespace RimWorldMcp.Bridge.Game
 
         private static readonly Dictionary<TileMutatorDef, bool> TerrainShaping = new Dictionary<TileMutatorDef, bool>();
 
+        // These only repaint the ground around rock that is already placed. Matched by exact type,
+        // because a subclass from a mod could do more.
+        private static readonly HashSet<Type> GroundOnlyWorkers = new HashSet<Type>
+        {
+            typeof(TileMutatorWorker_Patches),
+            typeof(TileMutatorWorker_Dunes),
+            typeof(TileMutatorWorker_Wetland),
+        };
+
         private static readonly int ElevationSeedPart = new GenStep_ElevationFertility().SeedPart;
         private static readonly int MutatorSeedPart = new GenStep_MutatorPostElevationFertility().SeedPart;
 
@@ -69,9 +78,10 @@ namespace RimWorldMcp.Bridge.Game
             ModuleBase mountain = null;
             if (mutators.Any(m => m.Worker is TileMutatorWorker_Mountain))
             {
-                // Mutators share one random sequence, so this is only exact if it runs first.
+                // Mutators share one random sequence in this step, so this is only exact if the mountain
+                // is the first to use it. Those that leave this step alone draw nothing from it.
                 mountain = BuildMountain(planetTile, seed, mapSize);
-                if (!(mutators[0].Worker is TileMutatorWorker_Mountain))
+                if (!(mutators.FirstOrDefault(UsesElevationStep)?.Worker is TileMutatorWorker_Mountain))
                 {
                     unmodeled.Add("(mutator order)");
                 }
@@ -107,11 +117,18 @@ namespace RimWorldMcp.Bridge.Game
             if (!TerrainShaping.TryGetValue(mutator, out bool shapes))
             {
                 Type worker = mutator.Worker.GetType();
-                shapes = worker.GetMethod(nameof(TileMutatorWorker.GeneratePostElevationFertility)).DeclaringType != typeof(TileMutatorWorker)
-                    || worker.GetMethod(nameof(TileMutatorWorker.GeneratePostTerrain)).DeclaringType != typeof(TileMutatorWorker);
+                shapes = !GroundOnlyWorkers.Contains(worker)
+                    && (UsesElevationStep(mutator)
+                        || worker.GetMethod(nameof(TileMutatorWorker.GeneratePostTerrain)).DeclaringType != typeof(TileMutatorWorker));
                 TerrainShaping[mutator] = shapes;
             }
             return shapes;
+        }
+
+        private static bool UsesElevationStep(TileMutatorDef mutator)
+        {
+            return mutator.Worker != null
+                && mutator.Worker.GetType().GetMethod(nameof(TileMutatorWorker.GeneratePostElevationFertility)).DeclaringType != typeof(TileMutatorWorker);
         }
 
         private static ModuleBase BuildElevation(SurfaceTile tile, int seed)

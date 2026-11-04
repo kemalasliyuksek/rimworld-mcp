@@ -10,14 +10,23 @@ namespace RimWorldMcp.Bridge.Game
     /// <summary>The colony's infrastructure: rooms, power, zones, production and storage.</summary>
     internal static class BaseEndpoint
     {
-        private const string AllSections = "rooms,power,zones,production,beds";
+        private static readonly string[] AllSections = { "rooms", "power", "zones", "production", "beds" };
 
         private const int MaxRooms = 80;
 
         public static void Base(QueryParams query, JsonWriter json)
         {
             Map map = GameAccess.ResolveMap(query);
-            var sections = new HashSet<string>(query.GetString("sections", AllSections).Split(','));
+            var sections = new HashSet<string>(query.GetList("sections"));
+            if (sections.Count == 0)
+            {
+                sections.UnionWith(AllSections);
+            }
+            string unknown = sections.FirstOrDefault(s => !AllSections.Contains(s));
+            if (unknown != null)
+            {
+                throw new BadRequestException($"Unknown section '{unknown}'. Use: {string.Join(", ", AllSections)}.");
+            }
 
             json.BeginObject();
             if (sections.Contains("rooms"))

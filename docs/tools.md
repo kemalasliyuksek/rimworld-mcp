@@ -26,7 +26,7 @@ is looking at.
 | Tool | Purpose |
 | --- | --- |
 | `get_threats` (`map`) | Visible enemies, colony fighters and turrets. |
-| `get_resources` (`map`) | Stock by category, wealth, stored weapons and apparel. |
+| `get_resources` (`map`) | Stock by category, wealth, stored weapons and apparel, and visible items outside storage. |
 | `get_base` (`sections`, `map`) | Rooms, power, zones, production and beds. |
 | `get_research` (`limit`) | Current project and available projects. |
 | `get_world` | Factions, quests, caravans, maps and ideoligion. |
@@ -43,7 +43,7 @@ is looking at.
 | Tool | Purpose |
 | --- | --- |
 | `search_defs` (`q`, `type`, `mod`, `limit`) | Search definitions from the game, DLCs and active mods, or list what a mod adds. |
-| `get_def` (`def`, `type`) | The full data of one definition, with mod patches applied. |
+| `get_def` (`def`, `type`) | The data of one definition, with mod patches applied and default values left out. |
 | `list_mods` | Active mods in load order. |
 
 ## New game screens

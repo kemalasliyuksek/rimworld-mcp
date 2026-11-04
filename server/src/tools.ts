@@ -97,7 +97,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "get_resources",
     title: "Resources",
     description:
-      "Stored items by category, silver, wealth breakdown (which drives raid size), and the weapons and apparel in storage.",
+      "Stored items by category, silver, wealth breakdown (which drives raid size), the weapons and apparel in storage, and the visible items lying outside storage, such as a new colony's supplies.",
     path: "/v1/resources",
     inputSchema: { map: mapParam },
   },
@@ -187,7 +187,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "get_def",
     title: "Game data details",
     description:
-      "The full data of one definition as the running game sees it, with all mod patches applied: stats, costs, requirements and so on. Find names with search_defs.",
+      "The data of one definition as the running game sees it, with all mod patches applied: stats, costs, requirements and so on. Fields left at their default value are omitted. Find names with search_defs.",
     path: "/v1/defs/get",
     inputSchema: {
       def: z.string().min(1).describe("Exact defName."),
