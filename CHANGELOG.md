@@ -40,12 +40,13 @@ All notable changes to this project are documented here. The format is based on
 - `view_map` and `inspect_cell` can show hidden information, only for when the player asks about it.
 - Pawn policies and allowed areas, stockpile settings, trade and caravans, on the player's request.
 - Orders, buttons and the Architect menu report the game's confirmation questions and can answer yes.
-- `edit_pawn` can fill needs, remove bad memories and end a mental break.
+- `edit_pawn` can set needs to any value, add and remove thoughts and health conditions, and start or end a mental break.
 
 ### Fixed
 
 - Buttons that act on the selected pawn no longer act on what the player has selected.
 - The stored weapons list no longer includes things like wood.
+- `get_threats` now counts the armor colonists are wearing.
 - The overview now lists conditions on the whole world, such as an aurora, not just those on the map.
 
 ### Changed

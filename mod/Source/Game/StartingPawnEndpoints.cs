@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using RimWorld;
 using RimWorld.Planet;
@@ -504,6 +505,12 @@ namespace RimWorldMcp.Bridge.Game
             private bool restoreNeeds;
             private bool clearBadMemories;
             private bool endMentalState;
+            private readonly List<(NeedDef Need, float Percent)> needs = new List<(NeedDef, float)>();
+            private readonly List<(ThoughtDef Thought, int Stage)> addedThoughts = new List<(ThoughtDef, int)>();
+            private readonly List<ThoughtDef> removedThoughts = new List<ThoughtDef>();
+            private readonly List<(HediffDef Condition, float? Severity)> addedConditions = new List<(HediffDef, float?)>();
+            private readonly List<HediffDef> removedConditions = new List<HediffDef>();
+            private MentalStateDef mentalState;
             private Gender? gender;
             private HairDef hair;
             private BeardDef beard;
@@ -562,6 +569,7 @@ namespace RimWorldMcp.Bridge.Game
                     edit.addedTraits.Add(ResolveAddedTrait(entry));
                 }
                 edit.CheckTraits(pawn);
+                edit.ReadMindAndBody(pawn, query);
 
                 string genderName = query.GetString("gender");
                 if (genderName != null)
@@ -624,6 +632,105 @@ namespace RimWorldMcp.Bridge.Game
                     }
                 }
                 return edit;
+            }
+
+            private void ReadMindAndBody(Pawn pawn, QueryParams query)
+            {
+                foreach ((string name, string value) in query.GetPairs("needs"))
+                {
+                    NeedDef need = ResolveStyleDef<NeedDef>(name);
+                    if (pawn.needs?.TryGetNeed(need) == null)
+                    {
+                        throw new BadRequestException($"{pawn.LabelShort} does not have the need '{name}'.");
+                    }
+                    if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float percent) || percent < 0f || percent > 100f)
+                    {
+                        throw new BadRequestException($"The value for '{name}' must be a percentage from 0 to 100.");
+                    }
+                    needs.Add((need, percent));
+                }
+
+                foreach (string entry in query.GetList("add_thoughts"))
+                {
+                    string[] parts = entry.Split(':');
+                    ThoughtDef thought = ResolveStyleDef<ThoughtDef>(parts[0].Trim());
+                    if (!thought.IsMemory)
+                    {
+                        throw new BadRequestException($"'{thought.defName}' comes from the pawn's situation, so it cannot be given directly.");
+                    }
+                    int stage = 0;
+                    int stages = Math.Max(1, thought.stages?.Count ?? 1);
+                    if (parts.Length > 1 && (!int.TryParse(parts[1], out stage) || stage < 0 || stage >= stages))
+                    {
+                        throw new BadRequestException($"The stage for '{thought.defName}' must be from 0 to {stages - 1}.");
+                    }
+                    addedThoughts.Add((thought, stage));
+                }
+                removedThoughts.AddRange(query.GetList("remove_thoughts").Select(ResolveStyleDef<ThoughtDef>));
+                if ((addedThoughts.Count > 0 || removedThoughts.Count > 0) && pawn.needs?.mood == null)
+                {
+                    throw new BadRequestException($"{pawn.LabelShort} has no mood, so has no thoughts to change.");
+                }
+
+                foreach (string entry in query.GetList("add_conditions"))
+                {
+                    string[] parts = entry.Split(':');
+                    HediffDef condition = ResolveStyleDef<HediffDef>(parts[0].Trim());
+                    float? severity = null;
+                    if (parts.Length > 1)
+                    {
+                        if (!float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed) || parsed < 0f)
+                        {
+                            throw new BadRequestException($"The severity for '{condition.defName}' must be a number of 0 or more.");
+                        }
+                        severity = parsed;
+                    }
+                    addedConditions.Add((condition, severity));
+                }
+                removedConditions.AddRange(query.GetList("remove_conditions").Select(ResolveStyleDef<HediffDef>));
+
+                mentalState = ResolveStyleDef<MentalStateDef>(query.GetString("mental_state"));
+                if (mentalState != null && pawn.mindState == null)
+                {
+                    throw new BadRequestException($"{pawn.LabelShort} cannot have a mental state.");
+                }
+            }
+
+            private void ApplyMindAndBody(Pawn pawn)
+            {
+                foreach ((HediffDef condition, float? severity) in addedConditions)
+                {
+                    Hediff hediff = pawn.health.AddHediff(condition);
+                    if (severity != null && hediff != null)
+                    {
+                        hediff.Severity = severity.Value;
+                    }
+                }
+                foreach (HediffDef condition in removedConditions)
+                {
+                    foreach (Hediff hediff in pawn.health.hediffSet.hediffs.Where(h => h.def == condition).ToList())
+                    {
+                        pawn.health.RemoveHediff(hediff);
+                    }
+                }
+
+                if (pawn.needs?.mood != null)
+                {
+                    MemoryThoughtHandler memories = pawn.needs.mood.thoughts.memories;
+                    removedThoughts.ForEach(memories.RemoveMemoriesOfDef);
+                    foreach ((ThoughtDef thought, int stage) in addedThoughts)
+                    {
+                        memories.TryGainMemory(ThoughtMaker.MakeThought(thought, stage));
+                    }
+                }
+                foreach ((NeedDef need, float percent) in needs)
+                {
+                    pawn.needs.TryGetNeed(need).CurLevelPercentage = percent / 100f;
+                }
+                if (mentalState != null)
+                {
+                    pawn.mindState.mentalStateHandler.TryStartMentalState(mentalState, forced: true);
+                }
             }
 
             private static T ResolveStyleDef<T>(string name) where T : Def
@@ -833,6 +940,8 @@ namespace RimWorldMcp.Bridge.Game
                         need.CurLevelPercentage = 1f;
                     }
                 }
+
+                ApplyMindAndBody(pawn);
 
                 if (clearRelations)
                 {

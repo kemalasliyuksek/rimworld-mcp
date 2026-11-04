@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -20,6 +21,31 @@ namespace RimWorldMcp.Bridge.Game
         public static bool IsActive(Pawn pawn)
         {
             return GenHostility.IsActiveThreatToPlayer(pawn);
+        }
+
+        // The same sum as the game's gear tab. The pawn's own stat leaves out what they are wearing.
+        private static float OverallArmor(Pawn pawn, StatDef stat)
+        {
+            float natural = Clamp(pawn.GetStatValue(stat) / 2f, 1f);
+            float total = 0f;
+            foreach (BodyPartRecord part in pawn.RaceProps.body.AllParts)
+            {
+                float unprotected = 1f - natural;
+                if (pawn.apparel != null)
+                {
+                    foreach (Apparel apparel in pawn.apparel.WornApparel.Where(a => a.def.apparel.CoversBodyPart(part)))
+                    {
+                        unprotected *= 1f - Clamp(apparel.GetStatValue(stat) / 2f, 1f);
+                    }
+                }
+                total += part.coverageAbs * (1f - unprotected);
+            }
+            return Clamp(total * 2f, 2f);
+        }
+
+        private static float Clamp(float value, float max)
+        {
+            return Math.Max(0f, Math.Min(value, max));
         }
 
         public static void Threats(QueryParams query, JsonWriter json)
@@ -72,7 +98,7 @@ namespace RimWorldMcp.Bridge.Game
                 json.Prop("shooting", pawn.skills?.GetSkill(SkillDefOf.Shooting)?.Level ?? 0);
                 json.Prop("melee", pawn.skills?.GetSkill(SkillDefOf.Melee)?.Level ?? 0);
                 json.Prop("health_pct", GameAccess.Percent(pawn.health.summaryHealth.SummaryHealthPercent));
-                json.Prop("armor_sharp_pct", GameAccess.Percent(pawn.GetStatValue(StatDefOf.ArmorRating_Sharp)));
+                json.Prop("armor_sharp_pct", GameAccess.Percent(OverallArmor(pawn, StatDefOf.ArmorRating_Sharp)));
                 json.Prop("drafted", pawn.Drafted);
                 json.EndObject();
             }

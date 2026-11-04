@@ -228,6 +228,7 @@ namespace RimWorldMcp.Bridge.Game
                 }
                 json.BeginObject();
                 json.Prop("need", GameAccess.Clean(need.LabelCap));
+                json.Prop("def", need.def.defName);
                 json.Prop("pct", GameAccess.Percent(need.CurLevelPercentage));
                 json.EndObject();
             }
@@ -250,6 +251,7 @@ namespace RimWorldMcp.Bridge.Game
             {
                 json.BeginObject();
                 json.Prop("label", GameAccess.Clean(group.LabelCap));
+                json.Prop("def", group.def.defName);
                 json.Prop("mood", thoughts.MoodOffsetOfGroup(group));
                 json.Prop("description", GameAccess.Truncate(GameAccess.Clean(group.Description), MaxThoughtDescription));
                 json.EndObject();
