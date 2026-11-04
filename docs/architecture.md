@@ -105,6 +105,17 @@ methods the precept menu uses, which also enforces the game's rules. All names a
 anything changes, so a mistake cannot leave the screen half configured. It never presses Next: the game
 runs its own validation then, and the tool reports the same checks in advance.
 
+## Choosing colonists
+
+`find_starting_pawn` generates candidates with the game's own `StartingPawnUtility`, temporarily setting
+the slot's generation request so that forced traits, gender and age go through the generator. It scores
+each candidate against the remaining criteria, keeps the best, discards the rest the way the game
+discards a regenerated pawn, and stops at a full match or the time limit. The original request is then
+restored, so the game's Randomize button behaves as usual.
+
+`edit_starting_pawn` checks every name and value first, so a typo cannot leave a half-edited pawn. It then
+sets the same fields the game does, and tells the game that disabled work may have changed.
+
 ## The MCP server
 
 - `discovery.ts` reads the discovery file.

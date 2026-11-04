@@ -62,6 +62,22 @@ namespace RimWorldMcp.Bridge.Core
             return result;
         }
 
+        /// <summary>Parses a value such as "Shooting:8,Medicine:5" into its name and value pairs.</summary>
+        public List<(string Name, string Value)> GetPairs(string name)
+        {
+            var result = new List<(string Name, string Value)>();
+            foreach (string item in GetList(name))
+            {
+                int separator = item.IndexOf(':');
+                if (separator <= 0 || separator == item.Length - 1)
+                {
+                    throw new BadRequestException($"Parameter '{name}' must look like Name:value,Name:value, but got '{item}'.");
+                }
+                result.Add((item.Substring(0, separator).Trim(), item.Substring(separator + 1).Trim()));
+            }
+            return result;
+        }
+
         public int GetInt(string name, int fallback, int min, int max)
         {
             string raw = GetString(name);

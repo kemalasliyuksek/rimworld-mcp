@@ -57,6 +57,23 @@ namespace RimWorldMcp.Bridge.Tests
         }
 
         [Fact]
+        public void PairsSplitIntoNamesAndValues()
+        {
+            var pairs = QueryParams.Parse("skills=Shooting%3A8%2C%20Medicine%3A5").GetPairs("skills");
+
+            Assert.Equal(new[] { ("Shooting", "8"), ("Medicine", "5") }, pairs);
+        }
+
+        [Theory]
+        [InlineData("skills=Shooting")]
+        [InlineData("skills=Shooting%3A")]
+        [InlineData("skills=%3A8")]
+        public void MalformedPairsAreRejected(string raw)
+        {
+            Assert.Throws<BadRequestException>(() => QueryParams.Parse(raw).GetPairs("skills"));
+        }
+
+        [Fact]
         public void MissingRequiredParametersAreRejected()
         {
             QueryParams query = QueryParams.Parse("");

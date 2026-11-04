@@ -30,7 +30,7 @@ Host: 127.0.0.1:41234
 Authorization: Bearer <token>
 ```
 
-- All endpoints use `GET`, except `/v1/sites/show` and `/v1/ideo/configure`, which use `POST`.
+- Endpoints that act on the new game screens use `POST`, and all others use `GET`.
 - `Host` must be exactly `127.0.0.1:<port>`.
 - Requests with an `Origin` header are rejected.
 
@@ -52,7 +52,7 @@ Failure looks like this:
 | 403 | `forbidden_host`, `forbidden_origin` |
 | 404 | `not_found`, `unknown_endpoint` |
 | 405 | `method_not_allowed` |
-| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site`, `not_configuring_ideo`, `ideology_not_active` |
+| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site`, `not_configuring_ideo`, `ideology_not_active`, `not_choosing_colonists` |
 | 429 | `too_many_requests` |
 | 500 | `internal_error` |
 | 503 | `game_busy`, `game_not_responding` |
@@ -85,3 +85,7 @@ Failure looks like this:
 | `/v1/ideo/options` | `section`, `issue` | `get_ideo_options` |
 | `/v1/ideo/setup` | | `get_ideo_setup` |
 | `POST /v1/ideo/configure` | `preset`, `memes`, `structure`, `precepts`, `name` | `configure_ideo` |
+| `/v1/starting-pawns` | | `get_starting_pawns` |
+| `POST /v1/starting-pawns/find` | See `docs/tools.md` | `find_starting_pawn` |
+| `POST /v1/starting-pawns/swap` | `first`, `second` | `swap_starting_pawns` |
+| `POST /v1/starting-pawns/edit` | See `docs/tools.md` | `edit_starting_pawn` |

@@ -1,7 +1,8 @@
 # Tools
 
-All tools are read-only, except for `show_site` and `configure_ideo`, which act on the new game screens
-when the player asks. Those marked with `map` accept an optional map id and default to the map the player
+All tools are read-only, except for `show_site`, `configure_ideo`, `find_starting_pawn`,
+`swap_starting_pawns` and `edit_starting_pawn`, which act on the new game screens when the player asks.
+Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -89,6 +90,15 @@ Or a flat site next to water, with caves to explore:
 | `get_ideo_setup` | The current screen and the ideoligion being edited, with anything that blocks continuing. |
 | `configure_ideo` (`preset` or `memes`, `structure`, `precepts`, `name`) | Builds the ideoligion with the game's generator and applies precepts. Only when the player asks. The player presses Next. |
 
+## Colonists
+
+| Tool | Purpose |
+| --- | --- |
+| `get_starting_pawns` | Every colonist on offer, in full, and essential work nobody selected can do. |
+| `find_starting_pawn` (`index`, `gender`, `min_age`, `max_age`, `min_skills`, `passions`, `require_traits`, `forbid_traits`, `must_be_capable_of`) | Generates candidates with the game's generator and keeps the closest match. Only when the player asks. |
+| `swap_starting_pawns` (`first`, `second`) | Swaps two colonists, which is how one left behind joins the group. Only when the player asks. |
+| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`) | Sets attributes directly. Only when the player explicitly asks. |
+
 ## Connection
 
 | Tool | Purpose |
@@ -107,6 +117,7 @@ Failures come back as tool errors in the form `code: message`:
 | `not_selecting_site` | `show_site` was called outside the site selection screen. |
 | `not_configuring_ideo` | `configure_ideo` was called outside the ideoligion screens. |
 | `ideology_not_active` | The game does not have the Ideology expansion. |
+| `not_choosing_colonists` | A colonist tool was called outside the colonist screen. |
 | `game_busy` | The game is loading or saving. Try again shortly. |
 | `game_not_responding` | The game's main thread did not answer in time, usually because the window is in the background with "Run in background" turned off. |
 | `not_found`, `bad_request` | The arguments do not match anything, or are invalid. |

@@ -19,7 +19,10 @@ Plans can change. Feedback and ideas are welcome in the issues.
 
 - [x] Choose a site and move the camera to it
 - [x] Set up the ideoligion on request
-- [ ] Fluid ideoligions, styles, and more of the other new game screens
+- [x] Find, swap and edit colonists on request
+- [ ] Removing precepts, fluid ideoligions and styles
+- [ ] Colonists' gender, xenotype, appearance and starting gear
+- [ ] The scenario, storyteller and world settings screens
 
 ## Actions (next)
 

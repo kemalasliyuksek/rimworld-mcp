@@ -17,7 +17,7 @@ The mod runs an HTTP server inside the game. These are the protections around it
 | Web pages you visit, which can send requests to localhost | Requests with an `Origin` header are rejected. |
 | DNS rebinding | The `Host` header must be exactly `127.0.0.1:<port>`. |
 | Reading the token from disk | `~/.rimworld-mcp/bridge.json` is `0600` and its directory is `0700` on Linux and macOS. On Windows it relies on the privacy of the user profile. |
-| Changing the game | Nothing modifies the game's code or files. Endpoints use `GET` and only read, except two `POST` endpoints that refuse to run outside the new game screens: `/v1/sites/show` moves the camera and selection, and `/v1/ideo/configure` builds the ideoligion being edited. The player confirms the result of both. |
+| Changing the game | Nothing modifies the game's code or files. Endpoints use `GET` and only read, except the `POST` endpoints, which refuse to run outside their new game screens: `/v1/sites/show` moves the camera and selection, `/v1/ideo/configure` builds the ideoligion being edited, and `/v1/starting-pawns/*` change the colonists on offer. The player confirms the result of all of them. |
 | Flooding the game | The request queue is limited and at most four requests run per frame. |
 
 ## What this does not protect against

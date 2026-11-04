@@ -13,8 +13,9 @@ accepted:
 2. **Never modify the game, and only observe during play.** Do not touch the game's code or files. Read
    endpoints have no gameplay side effects and do not consume the game's random numbers: all endpoints
    run inside `Rand.PushState()`. On the new game screens, tools may set things up, but only when the
-   player asks, using `POST`, taking the same steps as the game's own buttons, and always leaving the
-   final confirmation to the player. Those are `show_site` and `configure_ideo` so far.
+   player asks, using `POST`, and always leaving the final confirmation to the player. Prefer the same
+   steps as the game's own buttons. Only `edit_starting_pawn` goes further, and it says so in its
+   description, like other character editor mods.
 3. **No save footprint.** Do not add defs, game components or anything else that ends up in a save.
 4. **No required third-party mods or libraries in the mod.** That includes Harmony. Use reflection
    for the occasional private field.

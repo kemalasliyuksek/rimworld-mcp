@@ -39,7 +39,13 @@ describe("MCP server", () => {
     expect(listed.map((t) => t.name).sort()).toEqual(tools.map((t) => t.name).sort());
     for (const tool of listed) {
       expect(tool.annotations?.readOnlyHint, tool.name).toBe(
-        !["show_site", "configure_ideo"].includes(tool.name),
+        ![
+          "show_site",
+          "configure_ideo",
+          "find_starting_pawn",
+          "swap_starting_pawns",
+          "edit_starting_pawn",
+        ].includes(tool.name),
       );
       expect(tool.annotations?.destructiveHint, tool.name).toBe(false);
       expect(tool.description, tool.name).toBeTruthy();
@@ -66,11 +72,13 @@ describe("MCP server", () => {
   it("sends the setup tools as POST, and every other tool as a GET", async () => {
     await client.callTool({ name: "show_site", arguments: { tile: 42 } });
     await client.callTool({ name: "configure_ideo", arguments: { preset: "Unity_Family" } });
+    await client.callTool({ name: "edit_starting_pawn", arguments: { index: 0, skills: "Shooting:12" } });
     await client.callTool({ name: "search_sites", arguments: { caves: "exclude", shape: "crescent" } });
 
     expect(bridge.calls).toEqual([
       { method: "POST", path: "/v1/sites/show", params: { tile: 42 } },
       { method: "POST", path: "/v1/ideo/configure", params: { preset: "Unity_Family" } },
+      { method: "POST", path: "/v1/starting-pawns/edit", params: { index: 0, skills: "Shooting:12" } },
       { method: "GET", path: "/v1/sites/search", params: { caves: "exclude", shape: "crescent" } },
     ]);
   });

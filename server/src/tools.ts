@@ -319,6 +319,70 @@ export const tools: readonly ToolDefinition[] = [
     },
   },
   {
+    name: "get_starting_pawns",
+    title: "Colonist choices",
+    description:
+      "Works on the new game colonist screen. All the colonists on offer, in full: which are selected, skills and passions, traits, backstories, disabled work and health, plus any essential work that nobody selected can do.",
+    path: "/v1/starting-pawns",
+    inputSchema: {},
+  },
+  {
+    name: "find_starting_pawn",
+    title: "Find a colonist",
+    description:
+      "Only when the player asks. Replaces one colonist by generating many candidates with the game's own generator and keeping the one closest to the criteria, without editing any values. Prefer this over edit_starting_pawn, because it stays within what the game normally allows. If the criteria are demanding, it returns the closest candidate and lists what is unmet. Criteria left out are ignored.",
+    path: "/v1/starting-pawns/find",
+    acts: true,
+    inputSchema: {
+      index: z.number().int().min(0).describe("Colonist index from get_starting_pawns."),
+      gender: z.enum(["Male", "Female"]).optional(),
+      min_age: z.number().int().min(18).max(120).optional(),
+      max_age: z.number().int().min(18).max(120).optional(),
+      min_skills: z.string().optional().describe("For example Shooting:8,Medicine:5."),
+      passions: z.string().optional().describe("Minimum passions, for example Shooting:Major,Plants:Minor."),
+      require_traits: z.string().optional().describe("Comma-separated TraitDef defNames."),
+      forbid_traits: z.string().optional().describe("Comma-separated TraitDef defNames."),
+      must_be_capable_of: z
+        .string()
+        .optional()
+        .describe("Comma-separated work tags such as Violent or Intellectual, or 'everything'."),
+    },
+  },
+  {
+    name: "swap_starting_pawns",
+    title: "Swap colonists",
+    description:
+      "Only when the player asks. Swaps two colonists in the list, which is how one who was left behind joins the selected group: the first starting_count colonists are the ones who go.",
+    path: "/v1/starting-pawns/swap",
+    acts: true,
+    inputSchema: {
+      first: z.number().int().min(0),
+      second: z.number().int().min(0),
+    },
+  },
+  {
+    name: "edit_starting_pawn",
+    title: "Edit a colonist",
+    description:
+      "Only when the player explicitly asks to change specific attributes, since this goes beyond what the game normally allows. Directly sets the attributes you pass and leaves the others alone. Changing a backstory does not recalculate skills, so set those too if they should change. Find trait and backstory names with search_defs. It cannot change gender, xenotype, appearance or gear yet: for gender, use find_starting_pawn.",
+    path: "/v1/starting-pawns/edit",
+    acts: true,
+    inputSchema: {
+      index: z.number().int().min(0).describe("Colonist index from get_starting_pawns."),
+      first_name: z.string().optional(),
+      nickname: z.string().optional(),
+      last_name: z.string().optional(),
+      age: z.number().int().min(18).max(120).optional().describe("Biological age. Pawns under 18 cannot be set."),
+      childhood: z.string().optional().describe("BackstoryDef defName."),
+      adulthood: z.string().optional().describe("BackstoryDef defName. Needed for ages 20 and up."),
+      skills: z.string().optional().describe("Levels from 0 to 20, for example Shooting:12,Construction:8."),
+      passions: z.string().optional().describe("None, Minor or Major, for example Shooting:Major,Mining:None."),
+      add_traits: z.string().optional().describe("TraitDef defNames, with a level if it has several, for example Tough,Beauty:2."),
+      remove_traits: z.string().optional().describe("Comma-separated TraitDef defNames."),
+      clear_health: z.enum(["true"]).optional().describe("Removes all visible health conditions."),
+    },
+  },
+  {
     name: "get_game_status",
     title: "Connection status",
     description:
