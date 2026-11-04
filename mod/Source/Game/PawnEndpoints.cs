@@ -258,13 +258,19 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("mental_break_threshold_minor_pct", GameAccess.Percent(pawn.mindState.mentalBreaker.BreakThresholdMinor));
         }
 
+        private static bool IsCoveredByAddedPart(Hediff hediff, Pawn pawn)
+        {
+            return hediff is Hediff_MissingPart && hediff.Part != null && pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(hediff.Part);
+        }
+
         private static void WriteHealth(JsonWriter json, Pawn pawn)
         {
             json.Key("health").BeginObject();
             json.Prop("summary_pct", GameAccess.Percent(pawn.health.summaryHealth.SummaryHealthPercent));
             json.Prop("bleed_rate_per_day", pawn.health.hediffSet.BleedRateTotal);
             json.Key("conditions").BeginArray();
-            foreach (Hediff hediff in pawn.health.hediffSet.hediffs.Where(h => h.Visible))
+            // The parts under a bionic limb count as missing, which is dozens of lines that say nothing.
+            foreach (Hediff hediff in pawn.health.hediffSet.hediffs.Where(h => h.Visible && !IsCoveredByAddedPart(h, pawn)))
             {
                 json.BeginObject();
                 json.Prop("label", GameAccess.Clean(hediff.LabelCap));

@@ -501,6 +501,9 @@ namespace RimWorldMcp.Bridge.Game
             private readonly List<(TraitDef Trait, int Degree)> addedTraits = new List<(TraitDef, int)>();
             private bool clearHealth;
             private bool clearRelations;
+            private bool restoreNeeds;
+            private bool clearBadMemories;
+            private bool endMentalState;
             private Gender? gender;
             private HairDef hair;
             private BeardDef beard;
@@ -528,6 +531,9 @@ namespace RimWorldMcp.Bridge.Game
                     adulthood = ResolveBackstory(query.GetString("adulthood"), BackstorySlot.Adulthood),
                     clearHealth = query.GetString("clear_health") == "true",
                     clearRelations = query.GetString("clear_relations") == "true",
+                    restoreNeeds = query.GetString("restore_needs") == "true",
+                    clearBadMemories = query.GetString("clear_bad_memories") == "true",
+                    endMentalState = query.GetString("end_mental_state") == "true",
                 };
 
                 if (query.GetString("age") != null)
@@ -805,6 +811,26 @@ namespace RimWorldMcp.Bridge.Game
                     foreach (Hediff hediff in pawn.health.hediffSet.hediffs.Where(h => h.Visible).ToList())
                     {
                         pawn.health.RemoveHediff(hediff);
+                    }
+                }
+
+                if (endMentalState)
+                {
+                    pawn.MentalState?.RecoverFromState();
+                }
+                if (clearBadMemories && pawn.needs?.mood != null)
+                {
+                    MemoryThoughtHandler memories = pawn.needs.mood.thoughts.memories;
+                    foreach (Thought_Memory memory in memories.Memories.Where(m => m.MoodOffset() < 0f).ToList())
+                    {
+                        memories.RemoveMemory(memory);
+                    }
+                }
+                if (restoreNeeds && pawn.needs != null)
+                {
+                    foreach (Need need in pawn.needs.AllNeeds)
+                    {
+                        need.CurLevelPercentage = 1f;
                     }
                 }
 

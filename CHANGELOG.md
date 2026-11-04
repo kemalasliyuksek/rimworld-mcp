@@ -40,6 +40,7 @@ All notable changes to this project are documented here. The format is based on
 - `view_map` and `inspect_cell` can show hidden information, only for when the player asks about it.
 - Pawn policies and allowed areas, stockpile settings, trade and caravans, on the player's request.
 - Orders, buttons and the Architect menu report the game's confirmation questions and can answer yes.
+- `edit_pawn` can fill needs, remove bad memories and end a mental break.
 
 ### Fixed
 

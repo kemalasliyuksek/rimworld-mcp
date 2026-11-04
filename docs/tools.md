@@ -165,7 +165,7 @@ Or a flat site next to water, with caves to explore:
 | `get_starting_pawns` | Every colonist on offer, in full, and essential work nobody selected can do. Relations follow the game's social tab, and relatives the player has not met appear only as a count. |
 | `find_starting_pawn` (`index`, `gender`, `min_age`, `max_age`, `min_skills`, `passions`, `require_traits`, `forbid_traits`, `must_be_capable_of`) | Generates candidates with the game's generator and keeps the closest match. Only when the player asks. |
 | `swap_starting_pawns` (`first`, `second`) | Swaps two colonists, which is how one left behind joins the group. Only when the player asks. |
-| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `clear_relations`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`, `hair_color`, `skin_color`, `head`, `body`, `clear_apparel`, `wear`, `weapon`, `add_implants`) | Sets attributes directly. Only when the player explicitly asks. |
+| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `restore_needs`, `clear_bad_memories`, `end_mental_state`, `clear_relations`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`, `hair_color`, `skin_color`, `head`, `body`, `clear_apparel`, `wear`, `weapon`, `add_implants`) | Sets attributes directly. Only when the player explicitly asks. |
 
 ## Settings and mods
 
