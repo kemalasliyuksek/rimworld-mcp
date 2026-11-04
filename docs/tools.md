@@ -86,9 +86,9 @@ Or a flat site next to water, with caves to explore:
 
 | Tool | Purpose |
 | --- | --- |
-| `get_ideo_options` (`section`, `issue`) | Presets, memes, precept topics and the precepts of a topic, including those from mods. |
+| `get_ideo_options` (`section`, `issue`) | Presets, memes, precept topics, the precepts of a topic, icons and colors, including those from mods. |
 | `get_ideo_setup` | The current screen and the ideoligion being edited, with anything that blocks continuing. |
-| `configure_ideo` (`preset` or `memes`, `structure`, `precepts`, `name`) | Builds the ideoligion with the game's generator and applies precepts. Only when the player asks. The player presses Next. |
+| `configure_ideo` (`preset`, `memes`, `structure`, `precepts`, `remove_precepts`, `name`, `adjective`, `member_name`, `worship_room`, `icon`, `color`) | With a preset or memes, builds a new ideoligion with the game's generator. Without them, edits the current one and keeps everything else. Only when the player asks. The player presses Next. |
 
 ## Colonists
 
@@ -103,7 +103,7 @@ Or a flat site next to water, with caves to explore:
 
 | Tool | Purpose |
 | --- | --- |
-| `get_game_status` | Versions, language, and whether a game is loaded. |
+| `get_game_status` | Versions, language, whether a game is loaded, and which windows are open. |
 
 ## Errors
 

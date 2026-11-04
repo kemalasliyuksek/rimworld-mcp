@@ -288,7 +288,10 @@ export const tools: readonly ToolDefinition[] = [
       'What an ideoligion can be built from, including anything added by mods. The presets and memes sections describe the big choices. For precepts, use the issues section to see the topics, then the precepts section with an issue. Works on the new game screens and during a game.',
     path: "/v1/ideo/options",
     inputSchema: {
-      section: z.enum(["presets", "memes", "issues", "precepts"]).optional().describe("Defaults to presets."),
+      section: z
+        .enum(["presets", "memes", "issues", "precepts", "icons", "colors"])
+        .optional()
+        .describe("Defaults to presets. Icons and colors are filtered to fit the ideoligion being edited."),
       issue: z.string().optional().describe("Issue defName. Required for the precepts section."),
     },
   },
@@ -304,7 +307,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "configure_ideo",
     title: "Set up ideoligion",
     description:
-      "Only call this when the player asks you to set up their ideoligion for them. Works on the new game ideoligion screens. Builds an ideoligion with the game's own generator from a preset or memes, then applies any precepts you list, each replacing the current choice on its issue. It replaces whatever ideoligion is being edited, and can be called again to adjust it. The result stays on screen for the player, who presses Next themselves. The game fills in rituals, roles and styles, so read rejected_precepts and problems in the result and tell the player what you chose and why.",
+      "Only call this when the player asks you to set up their ideoligion for them. Works on the new game ideoligion screens. With a preset or memes, it builds a new ideoligion with the game's own generator, replacing the one being edited. The generator picks many precepts at random each time, so read the result and fix anything the player would not want. Without a preset or memes, it edits the current ideoligion and keeps everything else, which is the way to make small changes. Each precept you list replaces the current choice on its issue. The result stays on screen for the player, who presses Next themselves, so tell them what you chose and why, and whether it is ready. When setting one up, also choose a name, adjective, member name, ritual room, icon and color that fit it. Icons are listed by name only, since you cannot see them, so say that the player should check how the icon looks.",
     path: "/v1/ideo/configure",
     acts: true,
     inputSchema: {
@@ -316,6 +319,12 @@ export const tools: readonly ToolDefinition[] = [
         .describe("Structure meme defName. If there is none, the game picks one at random."),
       precepts: z.string().optional().describe("Comma-separated PreceptDef defNames to apply."),
       name: z.string().optional().describe("Name for the ideoligion. The game generates one if omitted."),
+      adjective: z.string().optional().describe("Adjective, as in 'the Steel Horizon way'."),
+      member_name: z.string().optional().describe("What a member is called."),
+      worship_room: z.string().optional().describe("Name of the ritual room."),
+      remove_precepts: z.string().optional().describe("Comma-separated PreceptDef defNames to remove."),
+      icon: z.string().optional().describe("IdeoIconDef defName, from the icons section of get_ideo_options."),
+      color: z.string().optional().describe("ColorDef defName, from the colors section of get_ideo_options."),
     },
   },
   {

@@ -65,8 +65,14 @@ namespace RimWorldMcp.Bridge.Game
                 case "precepts":
                     WritePrecepts(json, query.RequireString("issue"));
                     break;
+                case "icons":
+                    WriteIcons(json);
+                    break;
+                case "colors":
+                    WriteColors(json);
+                    break;
                 default:
-                    throw new BadRequestException("Parameter 'section' must be presets, memes, issues or precepts.");
+                    throw new BadRequestException("Parameter 'section' must be presets, memes, issues, precepts, icons or colors.");
             }
             json.EndObject();
         }
@@ -166,6 +172,51 @@ namespace RimWorldMcp.Bridge.Game
             json.EndArray();
         }
 
+        private static Ideo EditedIdeo()
+        {
+            Ideo ideo = Find.WindowStack.WindowOfType<Page_ConfigureIdeo>()?.ideo;
+            return ideo != null && ideo.memes.Any() ? ideo : null;
+        }
+
+        private static void WriteIcons(JsonWriter json)
+        {
+            Ideo ideo = EditedIdeo();
+            json.Key("icons").BeginArray();
+            foreach (IdeoIconDef icon in DefDatabase<IdeoIconDef>.AllDefsListForReading)
+            {
+                if (ideo != null && !icon.CanBeChosenForIdeo(ideo))
+                {
+                    continue;
+                }
+                json.BeginObject();
+                json.Prop("def", icon.defName);
+                json.Prop("path", icon.iconPath);
+                json.Prop("mod", icon.modContentPack?.Name);
+                json.EndObject();
+            }
+            json.EndArray();
+        }
+
+        private static void WriteColors(JsonWriter json)
+        {
+            Ideo ideo = EditedIdeo();
+            json.Key("colors").BeginArray();
+            foreach (IdeoColorDef entry in DefDatabase<IdeoColorDef>.AllDefsListForReading)
+            {
+                if (entry.colorDef?.colorType != ColorType.Ideo || (ideo != null && !entry.CanBeChosenForIdeo(ideo)))
+                {
+                    continue;
+                }
+                UnityEngine.Color color = entry.colorDef.color;
+                json.BeginObject();
+                json.Prop("def", entry.colorDef.defName);
+                json.Prop("label", entry.colorDef.label);
+                json.Prop("rgb", $"{(int)(color.r * 255)},{(int)(color.g * 255)},{(int)(color.b * 255)}");
+                json.EndObject();
+            }
+            json.EndArray();
+        }
+
         public static void Setup(QueryParams query, JsonWriter json)
         {
             RequireIdeology();
@@ -191,27 +242,53 @@ namespace RimWorldMcp.Bridge.Game
 
             // Everything is checked first, so that a typo cannot leave the screen half configured.
             IdeoPresetDef preset = ResolveDef<IdeoPresetDef>(query.GetString("preset"));
-            List<MemeDef> memes = ResolveMemes(query, preset);
+            bool rebuild = preset != null || query.GetList("memes").Count > 0;
+            List<MemeDef> memes = rebuild ? ResolveMemes(query, preset) : null;
             List<PreceptDef> precepts = query.GetList("precepts").Select(n => ResolveDef<PreceptDef>(n)).ToList();
-            CheckMemes(memes);
+            List<PreceptDef> removals = query.GetList("remove_precepts").Select(n => ResolveDef<PreceptDef>(n)).ToList();
+            IdeoIconDef icon = ResolveDef<IdeoIconDef>(query.GetString("icon"));
+            ColorDef color = ResolveColor(query.GetString("color"));
 
-            Page_ConfigureIdeo page = OpenCustomizeScreen(screen);
-
-            // An empty ideoligion waits behind this dialog when the player chose to build their own.
-            Find.WindowStack.TryRemove(typeof(Dialog_ChooseMemes), doCloseSound: false);
-
-            Ideo previous = page.ideo;
-            Ideo ideo = IdeoGenerator.GenerateIdeo(new IdeoGenerationParms(
-                Faction.OfPlayer.def,
-                forceNoExpansionIdeo: false,
-                disallowedPrecepts: null,
-                disallowedMemes: null,
-                forcedMemes: memes,
-                classicExtra: preset != null && preset.classicPlus));
-            page.SelectOrMakeNewIdeo(ideo);
-            if (previous != null && previous != ideo)
+            Ideo ideo;
+            if (rebuild)
             {
-                Find.IdeoManager.Remove(previous);
+                CheckMemes(memes);
+                Page_ConfigureIdeo page = OpenCustomizeScreen(screen);
+
+                // An empty ideoligion waits behind this dialog when the player chose to build their own.
+                Find.WindowStack.TryRemove(typeof(Dialog_ChooseMemes), doCloseSound: false);
+
+                Ideo previous = page.ideo;
+                ideo = IdeoGenerator.GenerateIdeo(new IdeoGenerationParms(
+                    Faction.OfPlayer.def,
+                    forceNoExpansionIdeo: false,
+                    disallowedPrecepts: null,
+                    disallowedMemes: null,
+                    forcedMemes: memes,
+                    classicExtra: preset != null && preset.classicPlus));
+                page.SelectOrMakeNewIdeo(ideo);
+                if (previous != null && previous != ideo)
+                {
+                    Find.IdeoManager.Remove(previous);
+                }
+            }
+            else
+            {
+                ideo = Find.WindowStack.WindowOfType<Page_ConfigureIdeo>()?.ideo;
+                if (ideo == null || !ideo.memes.Any())
+                {
+                    throw new BadRequestException("There is no ideoligion to edit yet. Pass 'preset' or 'memes' to build one.");
+                }
+            }
+
+            foreach (PreceptDef removal in removals)
+            {
+                Precept existing = ideo.PreceptsListForReading.FirstOrDefault(p => p.def == removal);
+                if (existing != null)
+                {
+                    ideo.RemovePrecept(existing);
+                    ideo.anyPreceptEdited = true;
+                }
             }
 
             var rejected = new List<(PreceptDef Precept, string Reason)>();
@@ -224,12 +301,33 @@ namespace RimWorldMcp.Bridge.Game
                 }
             }
 
-            string name = query.GetString("name");
-            if (name != null)
+            string oldSymbols = ideo.name + "|" + ideo.adjective + "|" + ideo.memberName;
+            ideo.name = query.GetString("name", ideo.name);
+            ideo.adjective = query.GetString("adjective", ideo.adjective);
+            ideo.memberName = query.GetString("member_name", ideo.memberName);
+            if (oldSymbols != ideo.name + "|" + ideo.adjective + "|" + ideo.memberName)
             {
-                ideo.name = name;
+                // Rituals and roles are named after these, as in the game's own symbols dialog.
+                ideo.MakeMemeberNamePluralDirty();
+                ideo.RegenerateAllPreceptNames();
             }
-            ideo.RegenerateDescription(force: true);
+            string worshipRoom = query.GetString("worship_room");
+            if (worshipRoom != null)
+            {
+                ideo.WorshipRoomLabel = worshipRoom;
+            }
+
+            if (icon != null || color != null)
+            {
+                // The faction's own color overrides this one unless it is cleared.
+                ideo.SetIcon(icon ?? ideo.iconDef, color ?? ideo.colorDef, clearPrimaryFactionColor: color != null);
+            }
+
+            // Rebuilding writes a fresh description. An edit keeps the one the player has already seen.
+            if (rebuild)
+            {
+                ideo.RegenerateDescription(force: true);
+            }
 
             json.BeginObject();
             json.Prop("screen", "customize");
@@ -357,7 +455,12 @@ namespace RimWorldMcp.Bridge.Game
         {
             json.Key("ideoligion").BeginObject();
             json.Prop("name", ideo.name);
+            json.Prop("adjective", ideo.adjective);
+            json.Prop("member_name", ideo.memberName);
+            json.Prop("worship_room", ideo.WorshipRoomLabel);
             json.Prop("culture", ideo.culture?.label);
+            json.Prop("icon", ideo.iconDef?.defName);
+            json.Prop("color", ideo.colorDef?.defName);
             json.Prop("description", GameAccess.Clean(ideo.description));
             WriteDefNames(json, "memes", ideo.memes);
             json.Key("precepts").BeginArray();
@@ -414,6 +517,20 @@ namespace RimWorldMcp.Bridge.Game
                 json.EndObject();
             }
             json.EndArray();
+        }
+
+        private static ColorDef ResolveColor(string name)
+        {
+            if (name == null)
+            {
+                return null;
+            }
+            ColorDef color = DefDatabase<ColorDef>.GetNamedSilentFail(name);
+            if (color == null || color.colorType != ColorType.Ideo)
+            {
+                throw new NotFoundException($"No ideoligion color named '{name}'. Find names with get_ideo_options and section colors.");
+            }
+            return color;
         }
 
         private static T ResolveDef<T>(string name) where T : Def

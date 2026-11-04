@@ -1,4 +1,5 @@
 using RimWorld;
+using System.Linq;
 using RimWorldMcp.Bridge.Core;
 using Verse;
 
@@ -17,6 +18,15 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("world_generated", Current.Game?.World != null);
             json.Prop("on_site_selection_screen", Find.WindowStack != null && Find.WindowStack.IsOpen<Page_SelectStartingSite>());
             json.Prop("active_mods", LoadedModManager.RunningModsListForReading.Count);
+            json.Key("open_windows").BeginArray();
+            if (Find.WindowStack != null)
+            {
+                foreach (Window window in Find.WindowStack.Windows.Where(w => !(w is ImmediateWindow)))
+                {
+                    json.Value(window.GetType().Name);
+                }
+            }
+            json.EndArray();
             json.EndObject();
         }
 

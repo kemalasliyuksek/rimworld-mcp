@@ -84,7 +84,7 @@ Failure looks like this:
 | `POST /v1/sites/show` | `tile` | `show_site` |
 | `/v1/ideo/options` | `section`, `issue` | `get_ideo_options` |
 | `/v1/ideo/setup` | | `get_ideo_setup` |
-| `POST /v1/ideo/configure` | `preset`, `memes`, `structure`, `precepts`, `name` | `configure_ideo` |
+| `POST /v1/ideo/configure` | See `docs/tools.md` | `configure_ideo` |
 | `/v1/starting-pawns` | | `get_starting_pawns` |
 | `POST /v1/starting-pawns/find` | See `docs/tools.md` | `find_starting_pawn` |
 | `POST /v1/starting-pawns/swap` | `first`, `second` | `swap_starting_pawns` |
