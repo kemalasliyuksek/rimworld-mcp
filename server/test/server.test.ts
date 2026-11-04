@@ -47,6 +47,9 @@ describe("MCP server", () => {
           "find_starting_pawn",
           "swap_starting_pawns",
           "edit_starting_pawn",
+          "set_game_settings",
+          "configure_mods",
+          "set_mod_settings",
         ].includes(tool.name),
       );
       expect(tool.annotations?.destructiveHint, tool.name).toBe(false);
@@ -82,6 +85,16 @@ describe("MCP server", () => {
       { method: "POST", path: "/v1/ideo/configure", params: { preset: "Unity_Family" } },
       { method: "POST", path: "/v1/starting-pawns/edit", params: { index: 0, skills: "Shooting:12" } },
       { method: "GET", path: "/v1/sites/search", params: { caves: "exclude", shape: "crescent" } },
+    ]);
+  });
+
+  it("passes an icon sheet to the assistant as an image, separate from its text", async () => {
+    bridge.next = () => Promise.resolve('{"icons":["A"],"image_png_base64":"aGVsbG8="}');
+    const result = await client.callTool({ name: "view_ideo_icons", arguments: {} });
+
+    expect(result.content).toEqual([
+      { type: "text", text: '{"icons":["A"]}' },
+      { type: "image", data: "aGVsbG8=", mimeType: "image/png" },
     ]);
   });
 

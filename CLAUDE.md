@@ -8,8 +8,10 @@ Lets AI assistants observe a running game of RimWorld through MCP. Open source, 
 - `docs/`: architecture, tools, bridge protocol and roadmap.
 
 Read the rules in `CONTRIBUTING.md` before changing the mod. They are hard constraints, above all:
-show only what the player can see, never modify the game, only act on setup screens at the player's
-request, and leave no trace of the mod in saves.
+show only what the player can see, never modify the code or files of the game or mods, only act at the
+player's request (setup screens, settings, mod list), and leave no trace of the mod in saves.
+
+Keep Unity-specific code in `BridgeBootstrap`, `BridgeHost` and `IconSheet`.
 
 `MountainPredictor` must stay in step with the game's map generation, down to the order of its random
 calls. Recheck it against `.decompiled/game` after any game update.
@@ -32,5 +34,4 @@ Inside the Claude Code sandbox, `dotnet test` fails because it cannot open a nam
 Check game APIs against `.decompiled/game` rather than from memory, since they change between
 versions. Never commit anything from `.decompiled/`: the EULA forbids redistributing it.
 
-Keep Unity-specific code in `BridgeBootstrap` and `BridgeHost`, because RimWorld 1.7 replaces Unity
-with the Waylith engine.
+RimWorld 1.7 replaces Unity with the Waylith engine, which is why Unity-specific code is kept apart.

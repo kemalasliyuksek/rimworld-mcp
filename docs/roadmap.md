@@ -20,10 +20,10 @@ Plans can change. Feedback and ideas are welcome in the issues.
 - [x] Choose a site and move the camera to it
 - [x] Set up the ideoligion on request
 - [x] Find, swap and edit colonists on request
-- [ ] Fluid ideoligions, and adding relics, buildings and apparel desires
-- [ ] Letting the assistant see icons, not just their names
+- [x] Fluid ideoligions, relics, buildings, apparel desires, and seeing icons
 - [x] The scenario, storyteller and world settings screens
-- [ ] Faction choices in the world settings
+- [x] Faction choices in the world settings
+- [x] RimWorld settings, the mod list and mods' settings, on request
 
 ## Actions (next)
 

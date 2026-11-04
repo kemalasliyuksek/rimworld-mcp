@@ -21,6 +21,8 @@ namespace RimWorldMcp.Bridge.Game
 
         private const int MaxDescription = 300;
 
+        private const int MaxVisibleFactions = 12;
+
         private static object GetField(object page, string name)
         {
             return FieldOf(page, name).GetValue(page);
@@ -253,6 +255,16 @@ namespace RimWorldMcp.Bridge.Game
                 }
             }
             json.EndArray();
+            json.Key("faction_options").BeginArray();
+            foreach (FactionDef faction in FactionGenerator.ConfigurableFactions.Where(f => f.displayInFactionSelection))
+            {
+                json.BeginObject();
+                json.Prop("def", faction.defName);
+                json.Prop("label", faction.label);
+                json.Prop("max", faction.maxConfigurableAtWorldCreation);
+                json.EndObject();
+            }
+            json.EndArray();
             WriteEnumNames<OverallRainfall>(json, "rainfall_options");
             WriteEnumNames<OverallTemperature>(json, "temperature_options");
             WriteEnumNames<OverallPopulation>(json, "population_options");
@@ -288,6 +300,7 @@ namespace RimWorldMcp.Bridge.Game
             }
             int? pollution = query.GetString("pollution_pct") == null ? (int?)null : query.GetInt("pollution_pct", 0, 0, 100);
             string seed = query.GetString("seed");
+            List<FactionDef> chosenFactions = ParseFactions(query);
             if (pollution != null && !ModsConfig.BiotechActive)
             {
                 throw new BadRequestException("World pollution needs the Biotech expansion.");
@@ -296,6 +309,13 @@ namespace RimWorldMcp.Bridge.Game
             if (seed != null)
             {
                 SetField(page, "seedString", seed);
+            }
+            if (chosenFactions != null)
+            {
+                // Factions hidden from this screen, such as the insects, must stay in the list.
+                var current = (List<FactionDef>)GetField(page, "factions");
+                current.RemoveAll(f => f.displayInFactionSelection);
+                current.AddRange(chosenFactions);
             }
             if (coverage != null)
             {
@@ -321,6 +341,31 @@ namespace RimWorldMcp.Bridge.Game
             {
                 page.pollution = pollution.Value / 100f;
             }
+        }
+
+        private static List<FactionDef> ParseFactions(QueryParams query)
+        {
+            List<(string Name, string Value)> pairs = query.GetPairs("factions");
+            if (pairs.Count == 0)
+            {
+                return null;
+            }
+            var factions = new List<FactionDef>();
+            foreach ((string name, string value) in pairs)
+            {
+                FactionDef faction = FactionGenerator.ConfigurableFactions.FirstOrDefault(f => f.defName == name && f.displayInFactionSelection)
+                    ?? throw new NotFoundException($"No faction named '{name}' can be chosen. See faction_options.");
+                if (!int.TryParse(value, out int count) || count < 1 || count > faction.maxConfigurableAtWorldCreation)
+                {
+                    throw new BadRequestException($"The count for '{name}' must be between 1 and {faction.maxConfigurableAtWorldCreation}.");
+                }
+                factions.AddRange(Enumerable.Repeat(faction, count));
+            }
+            if (factions.Count > MaxVisibleFactions)
+            {
+                throw new BadRequestException($"A world can have at most {MaxVisibleFactions} factions.");
+            }
+            return factions;
         }
 
         private static T? ParseEnum<T>(QueryParams query, string name) where T : struct, Enum

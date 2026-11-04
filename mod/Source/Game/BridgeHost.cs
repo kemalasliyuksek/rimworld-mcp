@@ -80,6 +80,13 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/ideo/options", IdeoEndpoints.Options);
             Register(endpoints, "/v1/ideo/setup", IdeoEndpoints.Setup);
             Register(endpoints, "/v1/ideo/configure", IdeoEndpoints.Configure, "POST");
+            Register(endpoints, "/v1/ideo/icon-sheet", IdeoEndpoints.IconSheetImage);
+            Register(endpoints, "/v1/game-settings", GameOptionsEndpoints.GetSettings);
+            Register(endpoints, "/v1/game-settings/set", GameOptionsEndpoints.SetSettings, "POST");
+            Register(endpoints, "/v1/mods/installed", GameOptionsEndpoints.InstalledMods);
+            Register(endpoints, "/v1/mods/configure", GameOptionsEndpoints.ConfigureMods, "POST");
+            Register(endpoints, "/v1/mods/settings", GameOptionsEndpoints.GetModSettings);
+            Register(endpoints, "/v1/mods/settings/set", GameOptionsEndpoints.SetModSettings, "POST");
             Register(endpoints, "/v1/starting-pawns", StartingPawnEndpoints.List);
             Register(endpoints, "/v1/starting-pawns/find", StartingPawnEndpoints.FindCandidate, "POST");
             Register(endpoints, "/v1/starting-pawns/swap", StartingPawnEndpoints.Swap, "POST");

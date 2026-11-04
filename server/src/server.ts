@@ -3,7 +3,7 @@ import { BridgeRequestError, type BridgeConnection, type QueryValue } from "./br
 import { BridgeNotFoundError } from "./discovery.js";
 import { tools } from "./tools.js";
 
-const INSTRUCTIONS = `These tools read the player's running game of RimWorld, live. They never modify the game's code or files, and while a game is being played they only observe. On the new game screens, a few tools can act for the player when asked: configure_new_game handles the scenario, storyteller and world settings, show_site and set_start_options handle the site, configure_ideo sets up the ideoligion, and find_starting_pawn, swap_starting_pawns and edit_starting_pawn change the colonists. Use them only when the player wants that. The player always confirms the result themselves.
+const INSTRUCTIONS = `These tools read the player's running game of RimWorld, live. They never modify the code or files of the game or its mods, and a game being played is only observed. When the player asks, you can also change RimWorld's settings, the mod list and mods' settings. On the new game screens, a few tools can act for the player when asked: configure_new_game handles the scenario, storyteller and world settings, show_site and set_start_options handle the site, configure_ideo sets up the ideoligion, and find_starting_pawn, swap_starting_pawns and edit_starting_pawn change the colonists. Use them only when the player wants that. The player always confirms the result themselves.
 
 When the player asks about their game, look at it before answering instead of asking them to describe it or send a screenshot. Begin with get_colony_overview, add get_player_focus if they say "this" or are facing a decision, and then use the more specific tools as needed.
 
@@ -39,6 +39,17 @@ export function createServer(bridge: BridgeConnection, version: string): McpServ
           const text = await (tool.acts
             ? bridge.post(tool.path, params)
             : bridge.get(tool.path, params));
+          if (tool.returnsImage) {
+            const { image_png_base64: data, ...details } = JSON.parse(text) as {
+              image_png_base64: string;
+            };
+            return {
+              content: [
+                { type: "text" as const, text: JSON.stringify(details) },
+                { type: "image" as const, data, mimeType: "image/png" },
+              ],
+            };
+          }
           return { content: [{ type: "text" as const, text }] };
         } catch (error) {
           return { isError: true, content: [{ type: "text" as const, text: describeError(error) }] };

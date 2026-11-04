@@ -1,8 +1,8 @@
 # Tools
 
-All tools are read-only, except for `configure_new_game`, `show_site`, `set_start_options`, `configure_ideo`, `find_starting_pawn`,
-`swap_starting_pawns` and `edit_starting_pawn`, which act on the new game screens when the player asks.
-Those marked with `map` accept an optional map id and default to the map the player
+All tools are read-only, except for those marked as acting on request: `configure_new_game`, `show_site`,
+`set_start_options`, `configure_ideo`, `find_starting_pawn`, `swap_starting_pawns`, `edit_starting_pawn`,
+`set_game_settings`, `configure_mods` and `set_mod_settings`. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -42,7 +42,7 @@ is looking at.
 
 | Tool | Purpose |
 | --- | --- |
-| `search_defs` (`q`, `type`, `limit`) | Search definitions from the game, DLCs and active mods. |
+| `search_defs` (`q`, `type`, `mod`, `limit`) | Search definitions from the game, DLCs and active mods, or list what a mod adds. |
 | `get_def` (`def`, `type`) | The full data of one definition, with mod patches applied. |
 | `list_mods` | Active mods in load order. |
 
@@ -51,7 +51,7 @@ is looking at.
 | Tool | Purpose |
 | --- | --- |
 | `get_new_game_setup` | The open scenario, storyteller or world settings screen, its choices and every option. |
-| `configure_new_game` (`scenario`, `storyteller`, `difficulty`, `difficulty_values`, `seed`, `planet_coverage_pct`, `rainfall`, `temperature`, `population`, `landmark_density`, `pollution_pct`) | Sets choices on the open screen. Only when the player asks. |
+| `configure_new_game` (`scenario`, `storyteller`, `difficulty`, `difficulty_values`, `seed`, `factions`, `planet_coverage_pct`, `rainfall`, `temperature`, `population`, `landmark_density`, `pollution_pct`) | Sets choices on the open screen. Only when the player asks. |
 
 ## Choosing a site
 
@@ -94,9 +94,10 @@ Or a flat site next to water, with caves to explore:
 
 | Tool | Purpose |
 | --- | --- |
-| `get_ideo_options` (`section`, `issue`) | Presets, memes, precept topics, the precepts of a topic, icons, colors, cultures and styles, including those from mods. |
+| `get_ideo_options` (`section`, `issue`) | Presets, memes, precept topics, the precepts of a topic, icons, colors, cultures, styles and what a relic, building or apparel desire can be, including those from mods. |
+| `view_ideo_icons` (`names`, `columns`) | Shows icons as an image, so they can be chosen by how they look. |
 | `get_ideo_setup` | The current screen and the ideoligion being edited, with anything that blocks continuing. |
-| `configure_ideo` (`preset`, `memes`, `structure`, `precepts`, `remove_precepts`, `name`, `adjective`, `member_name`, `worship_room`, `icon`, `color`, `culture`, `styles`) | With a preset or memes, builds a new ideoligion with the game's generator. Without them, edits the current one and keeps everything else. Only when the player asks. The player presses Next. |
+| `configure_ideo` (`preset`, `memes`, `structure`, `precepts`, `remove_precepts`, `name`, `adjective`, `member_name`, `worship_room`, `icon`, `color`, `culture`, `styles`, `add_things`, `remove_things`, `fluid`) | With a preset or memes, builds a new ideoligion with the game's generator. Without them, edits the current one and keeps everything else. Only when the player asks. The player presses Next. |
 
 ## Colonists
 
@@ -105,7 +106,18 @@ Or a flat site next to water, with caves to explore:
 | `get_starting_pawns` | Every colonist on offer, in full, and essential work nobody selected can do. |
 | `find_starting_pawn` (`index`, `gender`, `min_age`, `max_age`, `min_skills`, `passions`, `require_traits`, `forbid_traits`, `must_be_capable_of`) | Generates candidates with the game's generator and keeps the closest match. Only when the player asks. |
 | `swap_starting_pawns` (`first`, `second`) | Swaps two colonists, which is how one left behind joins the group. Only when the player asks. |
-| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`, `head`, `body`, `clear_apparel`, `wear`, `weapon`, `add_implants`) | Sets attributes directly. Only when the player explicitly asks. |
+| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`, `hair_color`, `skin_color`, `head`, `body`, `clear_apparel`, `wear`, `weapon`, `add_implants`) | Sets attributes directly. Only when the player explicitly asks. |
+
+## Settings and mods
+
+| Tool | Purpose |
+| --- | --- |
+| `get_game_settings` | The player's RimWorld settings. |
+| `set_game_settings` (`values`) | Changes and saves them. Only when the player asks. |
+| `get_installed_mods` (`q`) | Every installed mod, the load order and the game's warnings. |
+| `configure_mods` (`enable`, `disable`, `order`, `sort`) | Changes the mod list, which applies after a restart. Only when the player asks. |
+| `get_mod_settings` (`mod`) | A running mod's simple public settings. |
+| `set_mod_settings` (`mod`, `values`) | Changes and saves them. Only when the player asks. |
 
 ## Connection
 
@@ -127,6 +139,7 @@ Failures come back as tool errors in the form `code: message`:
 | `ideology_not_active` | The game does not have the Ideology expansion. |
 | `not_choosing_colonists` | A colonist tool was called outside the colonist screen. |
 | `not_on_new_game_screen` | `configure_new_game` was called outside its screens. |
+| `wrong_ideo_screen` | The open customization screen is for a fixed ideoligion and a fluid one was asked for, or the reverse. |
 | `game_busy` | The game is loading or saving. Try again shortly. |
 | `game_not_responding` | The game's main thread did not answer in time, usually because the window is in the background with "Run in background" turned off. |
 | `not_found`, `bad_request` | The arguments do not match anything, or are invalid. |

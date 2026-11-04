@@ -18,6 +18,10 @@ namespace RimWorldMcp.Bridge.Game
 
         private const int MaxStyles = 3;
 
+        private const int MaxIconsPerSheet = 64;
+
+        private const int IconSheetColumns = 8;
+
         // The game has no public way to go from the preset screen to the customization screen.
         private static readonly MethodInfo DoCustomizeMethod =
             typeof(Page_ChooseIdeoPreset).GetMethod("DoCustomize", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -79,8 +83,11 @@ namespace RimWorldMcp.Bridge.Game
                 case "styles":
                     WriteNamedDefs(json, "styles", DefDatabase<StyleCategoryDef>.AllDefs.Where(s => !s.fixedIdeoOnly));
                     break;
+                case "precept_things":
+                    WritePreceptThings(json, query.RequireString("precept"));
+                    break;
                 default:
-                    throw new BadRequestException("Parameter 'section' must be presets, memes, issues, precepts, icons, colors, cultures or styles.");
+                    throw new BadRequestException("Parameter 'section' must be presets, memes, issues, precepts, icons, colors, cultures, styles or precept_things.");
             }
             json.EndObject();
         }
@@ -205,6 +212,102 @@ namespace RimWorldMcp.Bridge.Game
             json.EndArray();
         }
 
+        /// <summary>What a relic, building or apparel desire can be, which is a separate choice for these.</summary>
+        private static void WritePreceptThings(JsonWriter json, string preceptName)
+        {
+            PreceptDef precept = ResolveDef<PreceptDef>(preceptName);
+            Ideo ideo = EditedIdeo()
+                ?? throw new BadRequestException("Build an ideoligion first, because the choices depend on it.");
+            json.Key("things").BeginArray();
+            foreach (ThingDef thing in AllowedThings(ideo, precept))
+            {
+                json.BeginObject();
+                json.Prop("def", thing.defName);
+                json.Prop("label", thing.label);
+                json.EndObject();
+            }
+            json.EndArray();
+        }
+
+        private static IEnumerable<ThingDef> AllowedThings(Ideo ideo, PreceptDef precept)
+        {
+            IEnumerable<ThingDef> things = precept.Worker.ThingDefsForIdeo(ideo, null).Select(t => t.def);
+            if (precept.preceptClass == typeof(Precept_Building))
+            {
+                things = things.Concat(ideo.memes.Where(m => m.consumableBuildings != null).SelectMany(m => m.consumableBuildings));
+            }
+            return things.Distinct().Where(t => precept.Worker.CanUse(t, ideo, null).Accepted);
+        }
+
+        /// <returns>Why it could not be added, or null if it was. The same steps as the game's menu.</returns>
+        private static string AddThingPrecept(Ideo ideo, PreceptDef def, ThingDef thing)
+        {
+            AcceptanceReport report = ideo.CanAddPreceptAllFactions(def);
+            if (!report.Accepted)
+            {
+                return GameAccess.Clean(report.Reason) ?? "It conflicts with the rest of the ideoligion.";
+            }
+            if (!AllowedThings(ideo, def).Contains(thing))
+            {
+                return $"'{thing.defName}' cannot be used for this. See the precept_things section.";
+            }
+
+            Precept precept = PreceptMaker.MakePrecept(def);
+            if (precept is Precept_Apparel apparel)
+            {
+                apparel.apparelDef = thing;
+            }
+            ideo.AddPrecept(precept, init: true);
+            ideo.anyPreceptEdited = true;
+            if (precept is Precept_ThingDef thingPrecept)
+            {
+                thingPrecept.ThingDef = thing;
+                thingPrecept.RegenerateName();
+            }
+            return null;
+        }
+
+        private static ThingDef ThingOf(Precept precept)
+        {
+            switch (precept)
+            {
+                case Precept_Apparel apparel:
+                    return apparel.apparelDef;
+                case Precept_ThingDef thing:
+                    return thing.ThingDef;
+                default:
+                    return null;
+            }
+        }
+
+        public static void IconSheetImage(QueryParams query, JsonWriter json)
+        {
+            RequireIdeology();
+            List<string> names = query.GetList("names");
+            Ideo ideo = EditedIdeo();
+            List<IdeoIconDef> icons = names.Count > 0
+                ? names.Select(n => ResolveDef<IdeoIconDef>(n)).ToList()
+                : DefDatabase<IdeoIconDef>.AllDefsListForReading.Where(i => ideo == null || i.CanBeChosenForIdeo(ideo)).Take(MaxIconsPerSheet).ToList();
+            if (icons.Count == 0)
+            {
+                throw new NotFoundException("There are no icons to show.");
+            }
+
+            int columns = query.GetInt("columns", IconSheetColumns, 1, 20);
+            string image = IconSheet.RenderToBase64Png(icons.Select(i => i.Icon).ToList(), columns);
+
+            json.BeginObject();
+            json.Prop("reading_order", $"Left to right, top to bottom, in rows of {columns}.");
+            json.Key("icons").BeginArray();
+            foreach (IdeoIconDef icon in icons)
+            {
+                json.Value(icon.defName);
+            }
+            json.EndArray();
+            json.Prop("image_png_base64", image);
+            json.EndObject();
+        }
+
         private static void WriteIcons(JsonWriter json)
         {
             Ideo ideo = EditedIdeo();
@@ -270,9 +373,20 @@ namespace RimWorldMcp.Bridge.Game
             // Everything is checked first, so that a typo cannot leave the screen half configured.
             IdeoPresetDef preset = ResolveDef<IdeoPresetDef>(query.GetString("preset"));
             bool rebuild = preset != null || query.GetList("memes").Count > 0;
+            bool fluid = query.GetString("fluid") == "true";
+            if (fluid && !rebuild)
+            {
+                throw new BadRequestException("Making an ideoligion fluid needs 'preset' or 'memes', because it has to be built that way.");
+            }
             List<MemeDef> memes = rebuild ? ResolveMemes(query, preset) : null;
             List<PreceptDef> precepts = query.GetList("precepts").Select(n => ResolveDef<PreceptDef>(n)).ToList();
             List<PreceptDef> removals = query.GetList("remove_precepts").Select(n => ResolveDef<PreceptDef>(n)).ToList();
+            List<ThingDef> removedThings = query.GetList("remove_things").Select(n => ResolveDef<ThingDef>(n)).ToList();
+            var addedThings = new List<(PreceptDef Precept, ThingDef Thing)>();
+            foreach ((string preceptName, string thingName) in query.GetPairs("add_things"))
+            {
+                addedThings.Add((ResolveDef<PreceptDef>(preceptName), ResolveDef<ThingDef>(thingName)));
+            }
             IdeoIconDef icon = ResolveDef<IdeoIconDef>(query.GetString("icon"));
             ColorDef color = ResolveColor(query.GetString("color"));
             CultureDef culture = ResolveDef<CultureDef>(query.GetString("culture"));
@@ -290,7 +404,11 @@ namespace RimWorldMcp.Bridge.Game
             if (rebuild)
             {
                 CheckMemes(memes);
-                Page_ConfigureIdeo page = OpenCustomizeScreen(screen);
+                if (fluid)
+                {
+                    CheckFluidMemes(memes);
+                }
+                Page_ConfigureIdeo page = OpenCustomizeScreen(screen, fluid);
 
                 // An empty ideoligion waits behind this dialog when the player chose to build their own.
                 Find.WindowStack.TryRemove(typeof(Dialog_ChooseMemes), doCloseSound: false);
@@ -302,7 +420,9 @@ namespace RimWorldMcp.Bridge.Game
                     disallowedPrecepts: null,
                     disallowedMemes: null,
                     forcedMemes: memes,
-                    classicExtra: preset != null && preset.classicPlus));
+                    classicExtra: preset != null && preset.classicPlus,
+                    forNewFluidIdeo: fluid));
+                ideo.Fluid = fluid;
                 page.SelectOrMakeNewIdeo(ideo);
                 if (previous != null && previous != ideo)
                 {
@@ -318,6 +438,15 @@ namespace RimWorldMcp.Bridge.Game
                 }
             }
 
+            foreach (ThingDef thing in removedThings)
+            {
+                Precept existing = ideo.PreceptsListForReading.FirstOrDefault(p => ThingOf(p) == thing);
+                if (existing != null)
+                {
+                    ideo.RemovePrecept(existing);
+                    ideo.anyPreceptEdited = true;
+                }
+            }
             foreach (PreceptDef removal in removals)
             {
                 Precept existing = ideo.PreceptsListForReading.FirstOrDefault(p => p.def == removal);
@@ -332,6 +461,14 @@ namespace RimWorldMcp.Bridge.Game
             foreach (PreceptDef precept in precepts)
             {
                 string reason = ApplyPrecept(ideo, precept);
+                if (reason != null)
+                {
+                    rejected.Add((precept, reason));
+                }
+            }
+            foreach ((PreceptDef precept, ThingDef thing) in addedThings)
+            {
+                string reason = AddThingPrecept(ideo, precept, thing);
                 if (reason != null)
                 {
                     rejected.Add((precept, reason));
@@ -457,15 +594,37 @@ namespace RimWorldMcp.Bridge.Game
             }
         }
 
-        private static Page_ConfigureIdeo OpenCustomizeScreen(string screen)
+        private static void CheckFluidMemes(List<MemeDef> memes)
         {
+            int normal = memes.Count(m => m.category == MemeCategory.Normal);
+            if (normal > IdeoFoundation.MemeCountRangeFluidAbsolute.max)
+            {
+                throw new BadRequestException($"A new fluid ideoligion can have only {IdeoFoundation.MemeCountRangeFluidAbsolute.max} normal meme, and this has {normal}.");
+            }
+            MemeDef tooStrong = memes.FirstOrDefault(m => !IdeoUtility.IsMemeAllowedForInitialFluidIdeo(m));
+            if (tooStrong != null)
+            {
+                throw new BadRequestException($"The meme '{tooStrong.defName}' cannot be used in a new fluid ideoligion.");
+            }
+        }
+
+        private static Page_ConfigureIdeo OpenCustomizeScreen(string screen, bool fluid)
+        {
+            if (screen == "customize")
+            {
+                bool isFluidScreen = Find.WindowStack.WindowOfType<Page_ConfigureIdeo>() is Page_ConfigureFluidIdeo;
+                if (fluid != isFluidScreen)
+                {
+                    throw new BridgeException(409, "wrong_ideo_screen", "The open customization screen is for a different kind of ideoligion. Ask the player to press Back to the preset screen first.");
+                }
+            }
             if (screen == "choose_preset")
             {
                 if (DoCustomizeMethod == null)
                 {
                     throw new InvalidOperationException("Page_ChooseIdeoPreset.DoCustomize no longer exists. The ideoligion setup needs updating for this version of the game.");
                 }
-                DoCustomizeMethod.Invoke(Find.WindowStack.WindowOfType<Page_ChooseIdeoPreset>(), new object[] { false });
+                DoCustomizeMethod.Invoke(Find.WindowStack.WindowOfType<Page_ChooseIdeoPreset>(), new object[] { fluid });
             }
             return Find.WindowStack.WindowOfType<Page_ConfigureIdeo>()
                 ?? throw new InvalidOperationException("The game did not open the ideoligion customization screen.");
@@ -510,6 +669,7 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("adjective", ideo.adjective);
             json.Prop("member_name", ideo.memberName);
             json.Prop("worship_room", ideo.WorshipRoomLabel);
+            json.Prop("fluid", ideo.Fluid);
             json.Prop("culture", ideo.culture?.label);
             json.Prop("icon", ideo.iconDef?.defName);
             json.Prop("color", ideo.colorDef?.defName);
@@ -523,6 +683,11 @@ namespace RimWorldMcp.Bridge.Game
                 json.Prop("def", precept.def.defName);
                 json.Prop("issue", precept.def.issue?.defName);
                 json.Prop("label", GameAccess.Clean(precept.TipLabel));
+                ThingDef thing = ThingOf(precept);
+                if (thing != null)
+                {
+                    json.Prop("thing", thing.defName);
+                }
                 json.Prop("impact", precept.def.impact.ToString());
                 json.EndObject();
             }

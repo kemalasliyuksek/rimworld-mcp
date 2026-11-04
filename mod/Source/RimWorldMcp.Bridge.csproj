@@ -53,6 +53,10 @@
       <HintPath>$(RimWorldManaged)/UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(RimWorldManaged)/UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>$(RimWorldManaged)/UnityEngine.IMGUIModule.dll</HintPath>
       <Private>false</Private>

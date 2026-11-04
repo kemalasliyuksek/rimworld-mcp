@@ -490,6 +490,8 @@ namespace RimWorldMcp.Bridge.Game
             private bool clearApparel;
             private readonly List<(ThingDef Apparel, ThingDef Stuff)> wear = new List<(ThingDef, ThingDef)>();
             private readonly List<HediffDef> implants = new List<HediffDef>();
+            private UnityEngine.Color? hairColor;
+            private UnityEngine.Color? skinColor;
 
             public static PawnEdit Validate(Pawn pawn, QueryParams query)
             {
@@ -548,6 +550,8 @@ namespace RimWorldMcp.Bridge.Game
                     throw new BadRequestException("Changing xenotype needs the Biotech expansion.");
                 }
 
+                edit.hairColor = ParseColor(query, "hair_color");
+                edit.skinColor = ParseColor(query, "skin_color");
                 edit.head = ResolveStyleDef<HeadTypeDef>(query.GetString("head"));
                 edit.body = ResolveStyleDef<BodyTypeDef>(query.GetString("body"));
                 edit.clearApparel = query.GetString("clear_apparel") == "true";
@@ -599,6 +603,21 @@ namespace RimWorldMcp.Bridge.Game
                 }
                 return DefDatabase<T>.GetNamedSilentFail(name)
                     ?? throw new NotFoundException($"No {typeof(T).Name} named '{name}'. Find names with search_defs.");
+            }
+
+            private static UnityEngine.Color? ParseColor(QueryParams query, string name)
+            {
+                string raw = query.GetString(name);
+                if (raw == null)
+                {
+                    return null;
+                }
+                int[] parts = raw.Split(',').Select(p => int.TryParse(p.Trim(), out int v) ? v : -1).ToArray();
+                if (parts.Length != 3 || parts.Any(v => v < 0 || v > 255))
+                {
+                    throw new BadRequestException($"Parameter '{name}' must be three numbers from 0 to 255, such as 120,80,40.");
+                }
+                return new UnityEngine.Color(parts[0] / 255f, parts[1] / 255f, parts[2] / 255f);
             }
 
             private static (ThingDef, ThingDef) ResolveMadeThing(string entry, Func<ThingDef, bool> isRightKind, string kind)
@@ -787,6 +806,14 @@ namespace RimWorldMcp.Bridge.Game
                 if (possessions != null)
                 {
                     Find.GameInitData.startingPossessions[pawn] = possessions;
+                }
+                if (hairColor != null)
+                {
+                    pawn.story.HairColor = hairColor.Value;
+                }
+                if (skinColor != null)
+                {
+                    pawn.story.skinColorOverride = skinColor;
                 }
                 if (head != null)
                 {

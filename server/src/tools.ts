@@ -8,6 +8,8 @@ export interface ToolDefinition {
   path: string;
   /** Set for the rare tool that acts on the player's request. Everything else reads with GET. */
   acts?: true;
+  /** The endpoint returns an image in image_png_base64, sent on to the assistant as an image. */
+  returnsImage?: true;
   inputSchema: z.ZodRawShape;
 }
 
@@ -175,8 +177,9 @@ export const tools: readonly ToolDefinition[] = [
       "Searches the game's definitions by name, label or description: items, buildings, research, recipes, traits, diseases and more. Covers the base game, DLCs and every active mod, in the player's language. Use it instead of relying on memory, since mods can change anything.",
     path: "/v1/defs/search",
     inputSchema: {
-      q: z.string().min(1).describe("Text to search for."),
+      q: z.string().min(1).optional().describe("Text to search for."),
       type: z.string().optional().describe("Limit to a def type, such as ThingDef or RecipeDef."),
+      mod: z.string().optional().describe("Limit to a mod by name or package id, which also shows what it adds. Pass at least one of q, type or mod."),
       limit: z.number().int().min(1).max(100).optional(),
     },
   },
@@ -225,6 +228,7 @@ export const tools: readonly ToolDefinition[] = [
         .optional()
         .describe("Storyteller screen: individual values, which switch to the custom difficulty, for example allowCaveHives:false,threatScale:0.8."),
       seed: z.string().optional().describe("World screen."),
+      factions: z.string().optional().describe("World screen: the factions in the world and how many of each, replacing the current choice, for example OutlanderCivil:1,Pirate:2. See faction_options."),
       planet_coverage_pct: z.number().int().optional().describe("World screen: 30, 50 or 100."),
       rainfall: z.string().optional().describe("World screen. See rainfall_options."),
       temperature: z.string().optional().describe("World screen. See temperature_options."),
@@ -335,10 +339,23 @@ export const tools: readonly ToolDefinition[] = [
     path: "/v1/ideo/options",
     inputSchema: {
       section: z
-        .enum(["presets", "memes", "issues", "precepts", "icons", "colors", "cultures", "styles"])
+        .enum(["presets", "memes", "issues", "precepts", "icons", "colors", "cultures", "styles", "precept_things"])
         .optional()
         .describe("Defaults to presets. Icons and colors are filtered to fit the ideoligion being edited."),
       issue: z.string().optional().describe("Issue defName. Required for the precepts section."),
+      precept: z.string().optional().describe("PreceptDef defName, for the precept_things section: what a relic, building or apparel desire can be."),
+    },
+  },
+  {
+    name: "view_ideo_icons",
+    title: "See ideoligion icons",
+    description:
+      "Shows ideoligion icons as one image, with the order of their names, so you can choose by how they look. Without names it shows those available to the ideoligion being edited, up to 64.",
+    path: "/v1/ideo/icon-sheet",
+    returnsImage: true,
+    inputSchema: {
+      names: z.string().optional().describe("Comma-separated IdeoIconDef defNames to show."),
+      columns: z.number().int().min(1).max(20).optional().describe("Defaults to 8."),
     },
   },
   {
@@ -353,7 +370,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "configure_ideo",
     title: "Set up ideoligion",
     description:
-      "Only call this when the player asks you to set up their ideoligion for them. Works on the new game ideoligion screens. With a preset or memes, it builds a new ideoligion with the game's own generator, replacing the one being edited. The generator picks many precepts at random each time, so read the result and fix anything the player would not want. Without a preset or memes, it edits the current ideoligion and keeps everything else, which is the way to make small changes. Each precept you list replaces the current choice on its issue. The result stays on screen for the player, who presses Next themselves, so tell them what you chose and why, and whether it is ready. When setting one up, also choose a name, adjective, member name, ritual room, icon and color that fit it. Icons are listed by name only, since you cannot see them, so say that the player should check how the icon looks.",
+      "Only call this when the player asks you to set up their ideoligion for them. Works on the new game ideoligion screens. With a preset or memes, it builds a new ideoligion with the game's own generator, replacing the one being edited. The generator picks many precepts at random each time, so read the result and fix anything the player would not want. Without a preset or memes, it edits the current ideoligion and keeps everything else, which is the way to make small changes. Each precept you list replaces the current choice on its issue. The result stays on screen for the player, who presses Next themselves, so tell them what you chose and why, and whether it is ready. When setting one up, also choose a name, adjective, member name, ritual room, icon and color that fit it. Look at icons with view_ideo_icons before choosing one.",
     path: "/v1/ideo/configure",
     acts: true,
     inputSchema: {
@@ -372,6 +389,9 @@ export const tools: readonly ToolDefinition[] = [
       icon: z.string().optional().describe("IdeoIconDef defName, from the icons section of get_ideo_options."),
       color: z.string().optional().describe("ColorDef defName, from the colors section of get_ideo_options."),
       culture: z.string().optional().describe("CultureDef defName, from the cultures section of get_ideo_options."),
+      add_things: z.string().optional().describe("Relics, buildings and apparel desires, as PreceptDef:ThingDef, for example IdeoRelic:Gun_ChainShotgun. See the precept_things section."),
+      remove_things: z.string().optional().describe("ThingDef defNames of relics, buildings or apparel desires to remove."),
+      fluid: z.enum(["true"]).optional().describe("Build a fluid ideoligion, which evolves during play but starts with only one normal meme of limited impact. Needs a preset or memes, on the preset screen."),
       styles: z.string().optional().describe("Comma-separated StyleCategoryDef defNames, highest priority first. Replaces the current styles."),
     },
   },
@@ -443,12 +463,73 @@ export const tools: readonly ToolDefinition[] = [
       favorite_color: z.string().optional().describe("ColorDef defName."),
       xenotype: z.string().optional().describe("XenotypeDef defName. Needs Biotech. Replaces the pawn's genes."),
       possessions: z.string().optional().describe("Items they bring, replacing the current list, for example MedicineIndustrial:5."),
+      hair_color: z.string().optional().describe("Red, green and blue from 0 to 255, such as 120,80,40."),
+      skin_color: z.string().optional().describe("Red, green and blue from 0 to 255, such as 230,190,160."),
       head: z.string().optional().describe("HeadTypeDef defName."),
       body: z.string().optional().describe("BodyTypeDef defName."),
       clear_apparel: z.enum(["true"]).optional().describe("Removes everything they wear first."),
       wear: z.string().optional().describe("Apparel ThingDef defNames, with a material if needed, for example Apparel_Parka:Cloth. Replaces anything it conflicts with."),
       weapon: z.string().optional().describe("Weapon ThingDef defName, with a material if needed. Replaces the current one."),
       add_implants: z.string().optional().describe("Comma-separated HediffDef defNames of surgical implants, such as BionicArm."),
+    },
+  },
+  {
+    name: "get_game_settings",
+    title: "RimWorld settings",
+    description: "The player's RimWorld settings: volumes, graphics, autosave, gameplay preferences and the rest.",
+    path: "/v1/game-settings",
+    inputSchema: {},
+  },
+  {
+    name: "set_game_settings",
+    title: "Change RimWorld settings",
+    description: "Only when the player asks. Changes and saves RimWorld settings, using the names from get_game_settings.",
+    path: "/v1/game-settings/set",
+    acts: true,
+    inputSchema: {
+      values: z.string().describe("For example runInBackground:true,volumeMusic:0.3."),
+    },
+  },
+  {
+    name: "get_installed_mods",
+    title: "Installed mods",
+    description: "Every installed mod, whether active or not, plus the load order and the game's own warnings about it, such as missing dependencies or a wrong order. list_mods only shows the mods running now.",
+    path: "/v1/mods/installed",
+    inputSchema: {
+      q: z.string().optional().describe("Filter by name or package id."),
+    },
+  },
+  {
+    name: "configure_mods",
+    title: "Change the mod list",
+    description: "Only when the player asks. Enables, disables, orders or sorts mods in the game's mod list. It applies after the game restarts, and it can affect existing saves, so say so. It does not change any mod's files.",
+    path: "/v1/mods/configure",
+    acts: true,
+    inputSchema: {
+      enable: z.string().optional().describe("Comma-separated package ids."),
+      disable: z.string().optional().describe("Comma-separated package ids."),
+      order: z.string().optional().describe("The full active list in load order, as comma-separated package ids."),
+      sort: z.enum(["true"]).optional().describe("Sort using the game's own auto-sort."),
+    },
+  },
+  {
+    name: "get_mod_settings",
+    title: "A mod's settings",
+    description: "The simple public settings of a running mod. A mod can have more settings than can be read this way.",
+    path: "/v1/mods/settings",
+    inputSchema: {
+      mod: z.string().describe("Package id."),
+    },
+  },
+  {
+    name: "set_mod_settings",
+    title: "Change a mod's settings",
+    description: "Only when the player asks. Changes and saves a running mod's settings, using the names from get_mod_settings.",
+    path: "/v1/mods/settings/set",
+    acts: true,
+    inputSchema: {
+      mod: z.string().describe("Package id."),
+      values: z.string().describe("For example someOption:true,someAmount:0.5."),
     },
   },
   {

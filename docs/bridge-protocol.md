@@ -30,7 +30,7 @@ Host: 127.0.0.1:41234
 Authorization: Bearer <token>
 ```
 
-- Endpoints that act on the new game screens use `POST`, and all others use `GET`.
+- Endpoints that act on the player's request use `POST`, and all others use `GET`.
 - `Host` must be exactly `127.0.0.1:<port>`.
 - Requests with an `Origin` header are rejected.
 
@@ -52,7 +52,7 @@ Failure looks like this:
 | 403 | `forbidden_host`, `forbidden_origin` |
 | 404 | `not_found`, `unknown_endpoint` |
 | 405 | `method_not_allowed` |
-| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site`, `not_configuring_ideo`, `ideology_not_active`, `not_choosing_colonists`, `not_on_new_game_screen` |
+| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site`, `not_configuring_ideo`, `ideology_not_active`, `not_choosing_colonists`, `not_on_new_game_screen`, `wrong_ideo_screen` |
 | 429 | `too_many_requests` |
 | 500 | `internal_error` |
 | 503 | `game_busy`, `game_not_responding` |
@@ -88,6 +88,13 @@ Failure looks like this:
 | `/v1/ideo/options` | `section`, `issue` | `get_ideo_options` |
 | `/v1/ideo/setup` | | `get_ideo_setup` |
 | `POST /v1/ideo/configure` | See `docs/tools.md` | `configure_ideo` |
+| `/v1/ideo/icon-sheet` | `names`, `columns` | `view_ideo_icons` |
+| `/v1/game-settings` | | `get_game_settings` |
+| `POST /v1/game-settings/set` | `values` | `set_game_settings` |
+| `/v1/mods/installed` | `q` | `get_installed_mods` |
+| `POST /v1/mods/configure` | `enable`, `disable`, `order`, `sort` | `configure_mods` |
+| `/v1/mods/settings` | `mod` | `get_mod_settings` |
+| `POST /v1/mods/settings/set` | `mod`, `values` | `set_mod_settings` |
 | `/v1/starting-pawns` | | `get_starting_pawns` |
 | `POST /v1/starting-pawns/find` | See `docs/tools.md` | `find_starting_pawn` |
 | `POST /v1/starting-pawns/swap` | `first`, `second` | `swap_starting_pawns` |

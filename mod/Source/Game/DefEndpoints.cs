@@ -37,13 +37,20 @@ namespace RimWorldMcp.Bridge.Game
 
         public static void Search(QueryParams query, JsonWriter json)
         {
-            string text = query.RequireString("q");
+            string text = query.GetString("q");
             string type = query.GetString("type");
+            string mod = query.GetString("mod");
+            if (text == null && type == null && mod == null)
+            {
+                throw new BadRequestException("Pass at least one of 'q', 'type' or 'mod'.");
+            }
             int limit = query.GetInt("limit", 25, 1, 100);
 
             List<(Def Def, int Rank)> matches = AllDefs()
                 .Where(d => type == null || string.Equals(d.GetType().Name, type, StringComparison.OrdinalIgnoreCase))
-                .Select(d => (Def: d, Rank: MatchRank(d, text)))
+                .Where(d => mod == null || (d.modContentPack != null && (d.modContentPack.Name.IndexOf(mod, StringComparison.OrdinalIgnoreCase) >= 0
+                    || d.modContentPack.PackageIdPlayerFacing.IndexOf(mod, StringComparison.OrdinalIgnoreCase) >= 0)))
+                .Select(d => (Def: d, Rank: text == null ? 1 : MatchRank(d, text)))
                 .Where(m => m.Rank > 0)
                 .OrderByDescending(m => m.Rank)
                 .ThenBy(m => m.Def.defName, StringComparer.Ordinal)
