@@ -154,7 +154,7 @@ namespace RimWorldMcp.Bridge.Game
             WriteHealth(json, pawn);
             WriteGear(json, pawn);
             WriteWork(json, pawn);
-            WriteRelations(json, pawn);
+            GameAccess.WriteRelations(json, pawn);
             json.EndObject();
         }
 
@@ -362,31 +362,6 @@ namespace RimWorldMcp.Bridge.Game
                 json.EndArray();
             }
             json.EndObject();
-        }
-
-        private static void WriteRelations(JsonWriter json, Pawn pawn)
-        {
-            if (pawn.relations == null)
-            {
-                return;
-            }
-            json.Key("relations").BeginArray();
-            foreach (DirectPawnRelation relation in pawn.relations.DirectRelations)
-            {
-                if (relation.otherPawn == null)
-                {
-                    continue;
-                }
-                json.BeginObject();
-                json.Prop("relation", relation.def.GetGenderSpecificLabel(relation.otherPawn));
-                json.Prop("pawn", relation.otherPawn.LabelShort);
-                if (pawn.needs?.mood != null && relation.otherPawn.RaceProps.Humanlike)
-                {
-                    json.Prop("opinion", pawn.relations.OpinionOf(relation.otherPawn));
-                }
-                json.EndObject();
-            }
-            json.EndArray();
         }
     }
 }

@@ -68,6 +68,45 @@ namespace RimWorldMcp.Bridge.Game
             return map.mapPawns.AllPawnsSpawned.Where(IsVisible);
         }
 
+        /// <summary>The same check as the game's social tab, which hides relatives the player has not met.</summary>
+        public static bool RelationIsVisible(Pawn pawn, Pawn other)
+        {
+            if ((other.RaceProps.Animal && other.Dead && other.Corpse == null) || other.Name == null || other.Name.Numerical)
+            {
+                return false;
+            }
+            return !pawn.relations.hidePawnRelations && !other.relations.hidePawnRelations && other.relations.everSeenByPlayer;
+        }
+
+        /// <summary>
+        /// Uses RelatedPawns and GetRelations rather than DirectRelations, because siblings, children
+        /// and other implied relations are not stored directly.
+        /// </summary>
+        public static void WriteRelations(JsonWriter json, Pawn pawn)
+        {
+            if (pawn.relations == null)
+            {
+                return;
+            }
+            json.Key("relations").BeginArray();
+            foreach (Pawn other in pawn.relations.RelatedPawns.ToList().Where(other => RelationIsVisible(pawn, other)))
+            {
+                json.BeginObject();
+                json.Prop("relation", string.Join(", ", pawn.GetRelations(other).Select(def => def.GetGenderSpecificLabel(other))));
+                json.Prop("pawn", other.LabelShort);
+                if (other.Dead)
+                {
+                    json.Prop("dead", true);
+                }
+                if (pawn.needs?.mood != null && other.RaceProps.Humanlike)
+                {
+                    json.Prop("opinion", pawn.relations.OpinionOf(other));
+                }
+                json.EndObject();
+            }
+            json.EndArray();
+        }
+
         /// <summary>All the player's colonists, including those away in caravans or transporters.</summary>
         public static List<Pawn> AllColonists()
         {

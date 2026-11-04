@@ -275,6 +275,8 @@ namespace RimWorldMcp.Bridge.Game
                 json.EndObject();
             }
             json.EndArray();
+            GameAccess.WriteRelations(json, pawn);
+            json.Prop("unseen_relatives", pawn.relations.RelatedPawns.ToList().Count(other => !GameAccess.RelationIsVisible(pawn, other)));
             json.EndObject();
         }
 
@@ -477,6 +479,7 @@ namespace RimWorldMcp.Bridge.Game
             private readonly List<TraitDef> removedTraits = new List<TraitDef>();
             private readonly List<(TraitDef Trait, int Degree)> addedTraits = new List<(TraitDef, int)>();
             private bool clearHealth;
+            private bool clearRelations;
             private Gender? gender;
             private HairDef hair;
             private BeardDef beard;
@@ -503,6 +506,7 @@ namespace RimWorldMcp.Bridge.Game
                     childhood = ResolveBackstory(query.GetString("childhood"), BackstorySlot.Childhood),
                     adulthood = ResolveBackstory(query.GetString("adulthood"), BackstorySlot.Adulthood),
                     clearHealth = query.GetString("clear_health") == "true",
+                    clearRelations = query.GetString("clear_relations") == "true",
                 };
 
                 if (query.GetString("age") != null)
@@ -781,6 +785,14 @@ namespace RimWorldMcp.Bridge.Game
                     {
                         pawn.health.RemoveHediff(hediff);
                     }
+                }
+
+                if (clearRelations)
+                {
+                    // The same steps the game takes when it rerolls a colonist. Relatives shared with
+                    // another colonist survive, and world pawn cleanup removes them once unconnected.
+                    PawnUtility.TryDestroyStartingColonistFamily(pawn);
+                    pawn.relations.ClearAllRelations();
                 }
 
                 if (gender != null && gender != pawn.gender)

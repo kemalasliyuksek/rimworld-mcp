@@ -458,6 +458,7 @@ export const tools: readonly ToolDefinition[] = [
       add_traits: z.string().optional().describe("TraitDef defNames, with a level if it has several, for example Tough,Beauty:2."),
       remove_traits: z.string().optional().describe("Comma-separated TraitDef defNames."),
       clear_health: z.enum(["true"]).optional().describe("Removes all visible health conditions."),
+      clear_relations: z.enum(["true"]).optional().describe("Removes all their family and other relations, including relatives the player has not met yet."),
       gender: z.enum(["Male", "Female"]).optional().describe("Also picks a new head and hair to suit."),
       hair: z.string().optional().describe("HairDef defName."),
       beard: z.string().optional().describe("BeardDef defName."),

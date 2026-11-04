@@ -19,4 +19,7 @@ All notable changes to this project are documented here. The format is based on
 - Ideoligion help on the new game screens: every preset, meme and precept in the game, and a tool that
   sets the ideoligion up on the player's request.
 - Colonist help on the new game screen: read every colonist on offer, generate candidates to match
-  criteria, swap them in, and edit their attributes on the player's request.
+  criteria, swap them in, and edit their attributes on the player's request, including removing all
+  of a colonist's relations.
+- Pawn relations now follow the game's social tab: implied relations such as siblings are included, and
+  relatives the player has not met are left out.
