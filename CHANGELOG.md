@@ -47,6 +47,8 @@ All notable changes to this project are documented here. The format is based on
 - Buttons that act on the selected pawn no longer act on what the player has selected.
 - The stored weapons list no longer includes things like wood.
 - `get_threats` now counts the armor colonists are wearing.
+- `get_base` lists only rooms in the home area, not every ruin on the map.
+- A wrong building material now lists the kinds it can be made from.
 - The overview now lists conditions on the whole world, such as an aurora, not just those on the map.
 
 ### Changed

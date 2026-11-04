@@ -89,6 +89,7 @@ namespace RimWorldMcp.Bridge.Game
                 if (def.MadeFromStuff)
                 {
                     json.Prop("stuff_needed", def.CostStuffCount);
+                    json.Prop("stuff_kinds", string.Join(", ", def.stuffCategories.Select(c => c.defName)));
                 }
                 if (def.CostList != null && def.CostList.Count > 0)
                 {
@@ -118,7 +119,8 @@ namespace RimWorldMcp.Bridge.Game
                 ThingDef stuff = DefDatabase<ThingDef>.GetNamedSilentFail(stuffName);
                 if (stuff == null || !def.MadeFromStuff || !stuff.IsStuff || !stuff.stuffProps.CanMake(def))
                 {
-                    throw new BadRequestException($"'{def.defName}' cannot be made from '{stuffName}'.");
+                    string kinds = def.MadeFromStuff ? $" It is made from: {string.Join(", ", def.stuffCategories.Select(c => c.defName))}." : " It is not made from a material.";
+                    throw new BadRequestException($"'{def.defName}' cannot be made from '{stuffName}'.{kinds}");
                 }
                 build.SetStuffDef(stuff);
             }

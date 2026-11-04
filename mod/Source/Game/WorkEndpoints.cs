@@ -79,7 +79,16 @@ namespace RimWorldMcp.Bridge.Game
 
             json.BeginObject();
             json.Prop("pawn", pawn.LabelShort);
-            PawnEndpoints.WriteWork(json, pawn);
+            json.Prop("manual_priorities", Find.PlaySettings.useWorkPriorities);
+            json.Key("changed").BeginArray();
+            foreach ((WorkTypeDef work, int priority) in changes)
+            {
+                json.BeginObject();
+                json.Prop("work", work.defName);
+                json.Prop("priority", pawn.workSettings.GetPriority(work));
+                json.EndObject();
+            }
+            json.EndArray();
             json.EndObject();
         }
 
@@ -128,7 +137,12 @@ namespace RimWorldMcp.Bridge.Game
 
             json.BeginObject();
             json.Prop("pawn", pawn.LabelShort);
-            PawnEndpoints.WriteWork(json, pawn);
+            json.Key("schedule_by_hour").BeginArray();
+            foreach (TimeAssignmentDef assignment in pawn.timetable.times)
+            {
+                json.Value(assignment.defName);
+            }
+            json.EndArray();
             json.EndObject();
         }
     }

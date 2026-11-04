@@ -52,10 +52,16 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
+        // Ruins all over the map count as rooms too, and they say nothing about the colony.
+        private static bool IsInHomeArea(Room room, Map map)
+        {
+            return room.Cells.Any(cell => map.areaManager.Home[cell]);
+        }
+
         private static void WriteRooms(JsonWriter json, Map map)
         {
             List<Room> rooms = map.regionGrid.AllRooms
-                .Where(r => r.ProperRoom && !r.PsychologicallyOutdoors && !r.Fogged)
+                .Where(r => r.ProperRoom && !r.PsychologicallyOutdoors && !r.Fogged && IsInHomeArea(r, map))
                 .OrderByDescending(r => r.CellCount)
                 .ToList();
 
