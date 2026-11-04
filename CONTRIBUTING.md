@@ -19,7 +19,10 @@ accepted:
    normally allows says so in its description. Read endpoints have no gameplay side effects and do not
    consume the game's random numbers: all endpoints run inside `Rand.PushState()`. Prefer the same steps
    as the game's own buttons, so that the game's checks and other mods still apply. Never change the
-   files of the game or of other mods on disk.
+   files of the game or of other mods on disk. Everything works through the game's code in the
+   background, and the player keeps full use of their computer and the game: tools never move the mouse
+   or press keys, and they do not change the player's selection, active tool or open windows. A tool
+   whose purpose is to show something, like `show_site`, may move the camera when asked.
 3. **Saves stay safe.** Removing the mod must not break a save. What the tools create should be
    ordinary game things. If a feature really has to store its own data, removing the mod must still
    leave the save loading cleanly.
