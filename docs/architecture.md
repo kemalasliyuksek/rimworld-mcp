@@ -82,8 +82,12 @@ hit a wall of solid rock, then scores the spot highly when rock covers most dire
 one opening, and there is room to build. Spots near the map edge are skipped, and a wall that runs off
 the edge of the map does not count, because enemies arrive from there.
 
-Predicting a tile takes real time on the main thread, so a search visits the matching tiles in
-shuffled order until a time budget runs out, and reports how many it evaluated.
+A search runs on the main thread, and a planet at full coverage has hundreds of thousands of land
+tiles, so it is built in stages. First comes a pass over every tile that only reads stored fields. The
+survivors are shuffled and visited one at a time, with the costlier checks and the mountain prediction,
+until a time budget runs out. The result reports how many tiles it checked and whether that was all of
+them. Tiles next to settlements are worked out once in advance, because the game's own check loops over
+every settlement each time it is asked.
 
 Cave tunnels matter here too: `GenStep_CaveHives` places insect hives in them, in proportion to their
 size. A tile has tunnels only if it has a cave feature, so they can be filtered out exactly.

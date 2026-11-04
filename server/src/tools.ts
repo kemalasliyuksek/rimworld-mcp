@@ -213,7 +213,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "search_sites",
     title: "Find places to settle",
     description:
-      'Searches the whole world for tiles that match what the player asks for, whatever that is, and works before a game starts. Every condition is optional. With shape "crescent" it predicts each tile\'s mountains from the world seed and ranks tiles by how well rock wraps around open ground with a single way in. min_rock_pct and max_rock_pct filter by how much of the map is predicted to be rock. Cave tunnels contain insect hives, which is worth mentioning when a player asks for caves. Do not suggest generating another world unless this finds nothing good.',
+      'Searches the whole world for tiles that match what the player asks for, whatever that is, and works before a game starts. Every condition is optional. With shape "crescent" it predicts each tile\'s mountains from the world seed and ranks tiles by how well rock wraps around open ground with a single way in. min_rock_pct and max_rock_pct filter by how much of the map is predicted to be rock. Cave tunnels contain insect hives, which is worth mentioning when a player asks for caves. A search has a time limit and checks a random sample on large planets, so whole_world_checked may be false. Narrowing by biome, hilliness or features lets it reach more of the matching tiles, and running it again does not change the result. Do not suggest generating another world unless this finds nothing good.',
     path: "/v1/sites/search",
     inputSchema: {
       biomes: z.string().optional().describe("Comma-separated biome defNames."),

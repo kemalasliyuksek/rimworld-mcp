@@ -27,9 +27,13 @@ namespace RimWorldMcp.Bridge.Game
         private const float MinGrowingTemperature = 6f;
         private const float MaxGrowingTemperature = 42f;
 
-        // Predicting a map costs real time on the main thread. This screen has nothing else to do,
-        // but the request still has to finish before the HTTP timeout.
-        private const long ShapeSearchBudgetMs = 6000;
+        // A search runs on the main thread, so it freezes the game while it works. A large planet has
+        // hundreds of thousands of tiles, far more than can be checked in full, so the time limit
+        // covers the whole search and the result says how much of the world it reached.
+        private const long SearchBudgetMs = 4000;
+
+        // Without a shape to predict, checking this many tiles is plenty to rank by climate.
+        private const int MaxCheckedWithoutPrediction = 3000;
 
         private static void RequireWorld()
         {
@@ -96,67 +100,120 @@ namespace RimWorldMcp.Bridge.Game
             {
                 throw new BadRequestException("The only supported shape is 'crescent'.");
             }
+            int minScore = query.GetInt("min_pocket_score", 0, 0, 100);
             int minRock = query.GetInt("min_rock_pct", 0, 0, 100);
             int maxRock = query.GetInt("max_rock_pct", 100, 0, 100);
+            bool needsPrediction = rankByPocket || minRock > 0 || maxRock < 100;
 
-            List<SurfaceTile> matches = Find.WorldGrid.Tiles.Where(filter.Matches).ToList();
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            List<SurfaceTile> candidates = Find.WorldGrid.Tiles
+                .Where(t => filter.MatchesCheaply(t) && (!rankByPocket || CanHaveMountains(t)))
+                .ToList();
+            Shuffle(candidates);
+            HashSet<int> blocked = TilesNextToSettlements();
+
+            int mapSize = MapSize();
+            var found = new List<SiteResult>();
+            int visited = 0;
+            foreach (SurfaceTile tile in candidates)
+            {
+                if (stopwatch.ElapsedMilliseconds > SearchBudgetMs || (!needsPrediction && visited >= MaxCheckedWithoutPrediction))
+                {
+                    break;
+                }
+                visited++;
+                if (blocked.Contains(tile.tile.tileId) || !filter.MatchesFully(tile))
+                {
+                    continue;
+                }
+
+                var result = new SiteResult { Tile = tile, GrowingDays = GrowingDays(tile) };
+                if (needsPrediction)
+                {
+                    result.Prediction = MountainPredictor.Predict(tile, mapSize, SearchCellsPerSample);
+                    result.Pocket = PocketAnalyzer.Analyze(result.Prediction.Rock, SearchCellsPerSample);
+                    if (result.Pocket.Score < minScore || result.Pocket.RockPercent < minRock || result.Pocket.RockPercent > maxRock)
+                    {
+                        continue;
+                    }
+                }
+                found.Add(result);
+            }
+
+            IEnumerable<SiteResult> ranked = rankByPocket
+                ? found.OrderByDescending(r => r.Pocket.Score)
+                : found.OrderByDescending(r => r.GrowingDays).ThenBy(r => Math.Abs(r.Tile.temperature - 18f));
 
             json.BeginObject();
-            json.Prop("matched", matches.Count);
-            if (rankByPocket || minRock > 0 || maxRock < 100)
+            json.Prop("candidates", candidates.Count);
+            json.Prop("checked", visited);
+            json.Prop("whole_world_checked", visited == candidates.Count);
+            json.Prop("found", found.Count);
+            json.Prop("sorted_by", rankByPocket ? "pocket score" : "growing days, then mildest climate");
+            json.Key("sites").BeginArray();
+            // The game's own validity check loops over every settlement, so it only runs on the few
+            // sites that are about to be returned.
+            foreach (SiteResult site in ranked.Where(r => TileFinder.IsValidTileForNewSettlement(r.Tile.tile)).Take(limit))
             {
-                WritePredictedResults(json, matches, limit, rankByPocket, query.GetInt("min_pocket_score", 0, 0, 100), minRock, maxRock);
+                WriteSite(json, site.Tile, site.Prediction == null ? ((SurfaceTile, MountainPredictor.Prediction, PocketResult)?)null : (site.Tile, site.Prediction, site.Pocket), detailed: false);
             }
-            else
-            {
-                json.Prop("sorted_by", "growing days, then mildest climate");
-                json.Key("sites").BeginArray();
-                foreach (SurfaceTile tile in matches.OrderByDescending(GrowingDays).ThenBy(t => Math.Abs(t.temperature - 18f)).Take(limit))
-                {
-                    WriteSite(json, tile, null, detailed: false);
-                }
-                json.EndArray();
-            }
+            json.EndArray();
+            json.Prop("search_ms", stopwatch.ElapsedMilliseconds);
             json.EndObject();
         }
 
-        private static void WritePredictedResults(JsonWriter json, List<SurfaceTile> matches, int limit, bool rankByPocket, int minScore, int minRock, int maxRock)
+        private sealed class SiteResult
         {
-            int mapSize = MapSize();
-            var evaluated = new List<(SurfaceTile Tile, MountainPredictor.Prediction Prediction, PocketResult Pocket)>();
-            var stopwatch = Stopwatch.StartNew();
-            bool budgetExhausted = false;
+            public SurfaceTile Tile;
+            public int GrowingDays;
+            public MountainPredictor.Prediction Prediction;
+            public PocketResult Pocket;
+        }
 
-            // A shuffle spreads the time budget across the whole planet. It uses its own generator
-            // so that the game's random numbers stay untouched.
-            var shuffler = new System.Random(Find.World.info.Seed);
-            foreach (SurfaceTile tile in matches.OrderBy(_ => shuffler.Next()))
+        // Flat land only reaches rock height through a mountain feature. Skipping the rest leaves the
+        // time budget for tiles that can actually have a pocket.
+        private static bool CanHaveMountains(SurfaceTile tile)
+        {
+            return tile.hilliness != Hilliness.Flat || tile.Mutators.Any(m => m.Worker is TileMutatorWorker_Mountain);
+        }
+
+        // Visiting tiles in a random order spreads a limited search across the whole planet. It uses
+        // its own generator so that the game's random numbers stay untouched.
+        private static void Shuffle(List<SurfaceTile> tiles)
+        {
+            var random = new System.Random(Find.World.info.Seed);
+            for (int i = tiles.Count - 1; i > 0; i--)
             {
-                if (stopwatch.ElapsedMilliseconds > ShapeSearchBudgetMs)
+                int other = random.Next(i + 1);
+                SurfaceTile swapped = tiles[i];
+                tiles[i] = tiles[other];
+                tiles[other] = swapped;
+            }
+        }
+
+        // The game cannot settle on or next to a settlement. Working this out once is what makes a
+        // world-wide search possible: asking per tile would loop over every settlement every time.
+        private static HashSet<int> TilesNextToSettlements()
+        {
+            var blocked = new HashSet<int>();
+            var neighbors = new List<PlanetTile>();
+            PlanetLayer surface = Find.WorldGrid.Surface;
+            foreach (Settlement settlement in Find.WorldObjects.Settlements)
+            {
+                PlanetTile tile = settlement.Tile;
+                if (tile.Layer != surface)
                 {
-                    budgetExhausted = true;
-                    break;
+                    continue;
                 }
-                MountainPredictor.Prediction prediction = MountainPredictor.Predict(tile, mapSize, SearchCellsPerSample);
-                evaluated.Add((tile, prediction, PocketAnalyzer.Analyze(prediction.Rock, SearchCellsPerSample)));
+                blocked.Add(tile.tileId);
+                neighbors.Clear();
+                Find.WorldGrid.GetTileNeighbors(tile, neighbors);
+                foreach (PlanetTile neighbor in neighbors)
+                {
+                    blocked.Add(neighbor.tileId);
+                }
             }
-
-            json.Prop("evaluated", evaluated.Count);
-            json.Prop("search_ms", stopwatch.ElapsedMilliseconds);
-            json.Prop("stopped_at_time_budget", budgetExhausted);
-            json.Prop("sorted_by", rankByPocket ? "pocket score" : "growing days");
-
-            var kept = evaluated.Where(e => e.Pocket.Score >= minScore && e.Pocket.RockPercent >= minRock && e.Pocket.RockPercent <= maxRock);
-            var ranked = rankByPocket
-                ? kept.OrderByDescending(e => e.Pocket.Score)
-                : kept.OrderByDescending(e => GrowingDays(e.Tile));
-
-            json.Key("sites").BeginArray();
-            foreach (var entry in ranked.Take(limit))
-            {
-                WriteSite(json, entry.Tile, entry, detailed: false);
-            }
-            json.EndArray();
+            return blocked;
         }
 
         public static void Get(QueryParams query, JsonWriter json)
@@ -358,6 +415,8 @@ namespace RimWorldMcp.Bridge.Game
         /// <summary>Parses the search parameters, and checks the cheapest conditions first.</summary>
         private sealed class SiteFilter
         {
+            private const int NoTemperatureLimit = -1000;
+
             private enum Presence
             {
                 Any,
@@ -389,8 +448,8 @@ namespace RimWorldMcp.Bridge.Game
                 requiredFeatures = ReadSet(query, "require_features");
                 minRainfall = query.GetInt("min_rainfall", 0, 0, int.MaxValue);
                 maxRainfall = query.GetInt("max_rainfall", int.MaxValue, 0, int.MaxValue);
-                minColdest = query.GetInt("min_coldest_c", -1000, -1000, 1000);
-                maxHottest = query.GetInt("max_hottest_c", 1000, -1000, 1000);
+                minColdest = query.GetInt("min_coldest_c", NoTemperatureLimit, NoTemperatureLimit, -NoTemperatureLimit);
+                maxHottest = query.GetInt("max_hottest_c", -NoTemperatureLimit, NoTemperatureLimit, -NoTemperatureLimit);
                 maxDiseases = query.GetInt("max_diseases_per_year", int.MaxValue, 0, int.MaxValue);
                 minGrowingDays = query.GetInt("min_growing_days", 0, 0, 60);
                 caves = ReadPresence(query, "caves");
@@ -425,16 +484,18 @@ namespace RimWorldMcp.Bridge.Game
 
             private static bool Passes(Presence wanted, bool actual)
             {
-                return wanted == Presence.Any || (wanted == Presence.Require) == actual;
+                return (wanted == Presence.Require) == actual;
             }
 
-            public bool Matches(SurfaceTile tile)
+            /// <summary>Only reads stored fields, so it is safe to run on every tile in the world.</summary>
+            public bool MatchesCheaply(SurfaceTile tile)
             {
-                if (tile.WaterCovered || !tile.PrimaryBiome.canBuildBase)
+                BiomeDef biome = tile.PrimaryBiome;
+                if (tile.WaterCovered || !biome.canBuildBase || !biome.implemented || tile.hilliness == Hilliness.Impassable)
                 {
                     return false;
                 }
-                if (biomes != null && !biomes.Contains(tile.PrimaryBiome.defName))
+                if (biomes != null && !biomes.Contains(biome.defName))
                 {
                     return false;
                 }
@@ -446,7 +507,17 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     return false;
                 }
-                if (60f / tile.PrimaryBiome.diseaseMtbDays > maxDiseases)
+                if (60f / biome.diseaseMtbDays > maxDiseases)
+                {
+                    return false;
+                }
+
+                // The yearly average lies between the extremes, so it can rule a tile out for free.
+                if (tile.temperature < minColdest || tile.temperature > maxHottest)
+                {
+                    return false;
+                }
+                if (minGrowingDays > 0 && tile.temperature < MinGrowingTemperature)
                 {
                     return false;
                 }
@@ -460,26 +531,37 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     return false;
                 }
+                if (caves != Presence.Any && !Passes(caves, Find.World.HasCaves(tile.tile)))
+                {
+                    return false;
+                }
+                if (river != Presence.Any && !Passes(river, tile.Rivers != null))
+                {
+                    return false;
+                }
+                return road == Presence.Any || Passes(road, tile.Roads != null);
+            }
 
-                PlanetTile id = tile.tile;
-                if (!Passes(caves, Find.World.HasCaves(id))
-                    || !Passes(river, tile.Rivers != null)
-                    || !Passes(road, tile.Roads != null)
-                    || !Passes(coast, tile.IsCoastal)
-                    || !Passes(lake, Find.World.LakeDirectionAt(id) != Rot4.Invalid))
+            /// <summary>The checks that look at neighboring tiles or sample a whole year of weather.</summary>
+            public bool MatchesFully(SurfaceTile tile)
+            {
+                if (coast != Presence.Any && !Passes(coast, tile.IsCoastal))
                 {
                     return false;
                 }
-
-                if (tile.MinTemperature < minColdest || tile.MaxTemperature > maxHottest)
+                if (lake != Presence.Any && !Passes(lake, Find.World.LakeDirectionAt(tile.tile) != Rot4.Invalid))
                 {
                     return false;
                 }
-                if (minGrowingDays > 0 && GrowingDays(tile) < minGrowingDays)
+                if (minColdest > NoTemperatureLimit && tile.MinTemperature < minColdest)
                 {
                     return false;
                 }
-                return TileFinder.IsValidTileForNewSettlement(id);
+                if (maxHottest < -NoTemperatureLimit && tile.MaxTemperature > maxHottest)
+                {
+                    return false;
+                }
+                return minGrowingDays == 0 || GrowingDays(tile) >= minGrowingDays;
             }
         }
     }

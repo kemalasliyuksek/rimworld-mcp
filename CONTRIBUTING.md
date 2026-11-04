@@ -17,7 +17,11 @@ accepted:
 3. **No save footprint.** Do not add defs, game components or anything else that ends up in a save.
 4. **No required third-party mods or libraries in the mod.** That includes Harmony. Use reflection
    for the occasional private field.
-5. **Never commit game files.** This includes decompiled code and game assemblies. The RimWorld EULA
+5. **Never freeze the game.** Endpoints run on the main thread, and a planet can have hundreds of
+   thousands of tiles. Anything that scans the world must stop at a time limit and report how far it
+   got. Beware of game methods that look cheap, because some loop over every settlement or sample a
+   whole year of weather.
+6. **Never commit game files.** This includes decompiled code and game assemblies. The RimWorld EULA
    allows decompiling to learn from and refer to the code, but not redistributing it.
 
 ## Setup
