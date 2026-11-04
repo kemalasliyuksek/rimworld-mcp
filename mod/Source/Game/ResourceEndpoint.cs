@@ -84,8 +84,10 @@ namespace RimWorldMcp.Bridge.Game
 
         private static void WriteEquipment(JsonWriter json, string key, Map map, ThingRequestGroup group)
         {
+            // The game's weapon group also holds things that merely can be swung, such as wood.
             List<Thing> items = map.listerThings.ThingsInGroup(group)
                 .Where(t => GameAccess.IsVisible(t) && t.IsInAnyStorage())
+                .Where(t => group != ThingRequestGroup.Weapon || t.def.equipmentType == EquipmentType.Primary)
                 .ToList();
 
             json.Key(key).BeginObject();

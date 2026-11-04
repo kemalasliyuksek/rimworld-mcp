@@ -68,6 +68,11 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/orders/give", OrderEndpoints.GiveOrder, "POST");
             Register(endpoints, "/v1/gizmos", OrderEndpoints.ListGizmos);
             Register(endpoints, "/v1/gizmos/use", OrderEndpoints.UseGizmo, "POST");
+            Register(endpoints, "/v1/designators", ArchitectEndpoints.List);
+            Register(endpoints, "/v1/designators/use", ArchitectEndpoints.Use, "POST");
+            Register(endpoints, "/v1/plans", ArchitectEndpoints.ListPlans);
+            Register(endpoints, "/v1/plans/draw", ArchitectEndpoints.DrawPlan, "POST");
+            Register(endpoints, "/v1/plans/remove", ArchitectEndpoints.RemovePlan, "POST");
             Register(endpoints, "/v1/threats", ThreatEndpoint.Threats);
             Register(endpoints, "/v1/resources", ResourceEndpoint.Resources);
             Register(endpoints, "/v1/base", BaseEndpoint.Base);

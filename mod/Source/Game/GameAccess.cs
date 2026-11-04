@@ -115,6 +115,21 @@ namespace RimWorldMcp.Bridge.Game
                 json.EndObject();
             }
             json.EndArray();
+
+            if (pawn.needs?.mood == null)
+            {
+                return;
+            }
+            json.Key("opinions").BeginArray();
+            foreach (Pawn other in SocialCardUtility.PawnsForSocialInfo(pawn).ToList())
+            {
+                json.BeginObject();
+                json.Prop("pawn", other.LabelShort);
+                json.Prop("of_them", pawn.relations.OpinionOf(other));
+                json.Prop("of_this_pawn", other.relations.OpinionOf(pawn));
+                json.EndObject();
+            }
+            json.EndArray();
         }
 
         /// <summary>All the player's colonists, including those away in caravans or transporters.</summary>

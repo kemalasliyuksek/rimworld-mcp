@@ -33,6 +33,9 @@ cd server && pnpm typecheck && pnpm test && pnpm build
 Inside the Claude Code sandbox, `dotnet test` fails because it cannot open a named pipe. Use
 `dotnet run --project mod/Tests` instead.
 
+Bound test runs with `DOTNET_GCHeapHardLimit=40000000 timeout 150`. The parsers take any coordinates, and
+a runaway loop once took 24 GB and got the terminal killed by the system's out-of-memory handling.
+
 ## Working on game code
 
 Check game APIs against `.decompiled/game` rather than from memory, since they change between

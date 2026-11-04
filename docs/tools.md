@@ -3,7 +3,7 @@
 All tools are read-only, except for those marked as acting on request: `configure_new_game`, `show_site`,
 `set_start_options`, `configure_ideo`, `find_starting_pawn`, `swap_starting_pawns`, `edit_starting_pawn`,
 `set_game_settings`, `configure_mods`, `set_mod_settings`, `set_work_priorities`, `set_schedule`,
-`set_drafted`, `move_pawns`, `give_pawn_order` and `use_gizmo`. The mod's settings can turn acting tools off. Those marked with `map` accept an optional map id and default to the map the player
+`set_drafted`, `move_pawns`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan` and `remove_plan`. The mod's settings can turn acting tools off. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -39,6 +39,18 @@ is looking at.
 | `get_base` (`sections`, `map`) | Rooms, power, zones, production and beds. |
 | `get_research` (`limit`) | Current project and available projects. |
 | `get_world` | Factions, quests, caravans, maps and ideoligion. |
+
+## Building
+
+| Tool | What it does |
+| --- | --- |
+| `list_designators` (`category`) | What the Architect menu offers, including what mods add. |
+| `use_designator` (`designator`, `cells`, `stuff`, `rotation`) | Applies one to cells: build, mine, cut, make zones and more. Only when the player asks. |
+| `list_plans` (`map`) | Plans on the map and the available colors. |
+| `draw_plan` (`cells`, `color`, `label`, `map`) | Draws planning marks to propose a layout. Only when the player asks. |
+| `remove_plan` (`plan`, `map`) | Removes one plan, or `all`. |
+
+Cells are parts separated by semicolons: a cell (`10,20`), a filled rectangle (`10,20-15,25`), or the edge of one (`outline:10,20-15,25`).
 
 ## Map
 

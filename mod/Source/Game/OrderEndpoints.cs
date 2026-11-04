@@ -191,16 +191,19 @@ namespace RimWorldMcp.Bridge.Game
             json.BeginObject();
             json.Prop("pawn", pawn.LabelShort);
             json.Key("orders").BeginArray();
-            foreach (FloatMenuOption option in OptionsFor(pawn, cell))
+            PlayerInputGuard.Run(pawn, () =>
             {
-                json.BeginObject();
-                json.Prop("order", GameAccess.Clean(option.Label));
-                if (option.Disabled)
+                foreach (FloatMenuOption option in OptionsFor(pawn, cell))
                 {
-                    json.Prop("disabled", true);
+                    json.BeginObject();
+                    json.Prop("order", GameAccess.Clean(option.Label));
+                    if (option.Disabled)
+                    {
+                        json.Prop("disabled", true);
+                    }
+                    json.EndObject();
                 }
-                json.EndObject();
-            }
+            });
             json.EndArray();
             json.EndObject();
         }
@@ -218,20 +221,17 @@ namespace RimWorldMcp.Bridge.Game
             {
                 WriteResult(json, pawn, _ =>
                 {
-                    List<FloatMenuOption> options = OptionsFor(pawn, cell);
-                    List<FloatMenuOption> matches = options
-                        .Where(o => string.Equals(GameAccess.Clean(o.Label), order, StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-                    if (matches.Count == 0)
+                    WriteOutcome(json, PlayerInputGuard.Run(pawn, () =>
                     {
-                        throw new NotFoundException($"{pawn.LabelShort} has no such order there. Orders: {string.Join(" | ", options.Select(o => GameAccess.Clean(o.Label)))}.");
-                    }
-                    FloatMenuOption option = matches[0];
-                    if (option.Disabled)
-                    {
-                        throw new BadRequestException("The game does not allow this order right now.");
-                    }
-                    WriteOutcome(json, PlayerInputGuard.Run(() => option.Chosen(colonistOrdering: false, floatMenu: null)));
+                        List<FloatMenuOption> options = OptionsFor(pawn, cell);
+                        FloatMenuOption option = options.FirstOrDefault(o => string.Equals(GameAccess.Clean(o.Label), order, StringComparison.OrdinalIgnoreCase))
+                            ?? throw new NotFoundException($"{pawn.LabelShort} has no such order there. Orders: {string.Join(" | ", options.Select(o => GameAccess.Clean(o.Label)))}.");
+                        if (option.Disabled)
+                        {
+                            throw new BadRequestException("The game does not allow this order right now.");
+                        }
+                        option.Chosen(colonistOrdering: false, floatMenu: null);
+                    }));
                 });
             }
             json.EndArray();
@@ -306,32 +306,35 @@ namespace RimWorldMcp.Bridge.Game
             Thing thing = FindThing(query.RequireString("thing"));
 
             json.BeginObject();
-            json.Prop("thing", thing.LabelShort);
+            json.Prop("thing", GameAccess.Clean(thing.LabelShort));
             json.Key("buttons").BeginArray();
-            foreach (Command command in CommandsOf(thing))
+            PlayerInputGuard.Run(thing, () =>
             {
-                json.BeginObject();
-                json.Prop("button", GameAccess.Clean(command.LabelCap));
-                json.Prop("description", GameAccess.Truncate(GameAccess.Clean(command.Desc), MaxDescription));
-                string kind = KindOf(command);
-                if (kind != null)
+                foreach (Command command in CommandsOf(thing))
                 {
-                    json.Prop("kind", kind);
+                    json.BeginObject();
+                    json.Prop("button", GameAccess.Clean(command.LabelCap));
+                    json.Prop("description", GameAccess.Truncate(GameAccess.Clean(command.Desc), MaxDescription));
+                    string kind = KindOf(command);
+                    if (kind != null)
+                    {
+                        json.Prop("kind", kind);
+                    }
+                    else
+                    {
+                        json.Prop("usable", false);
+                    }
+                    if (command is Command_Toggle toggle && toggle.isActive != null)
+                    {
+                        json.Prop("on", toggle.isActive());
+                    }
+                    if (command.Disabled)
+                    {
+                        json.Prop("disabled", GameAccess.Clean(command.disabledReason) ?? "");
+                    }
+                    json.EndObject();
                 }
-                else
-                {
-                    json.Prop("usable", false);
-                }
-                if (command is Command_Toggle toggle && toggle.isActive != null)
-                {
-                    json.Prop("on", toggle.isActive());
-                }
-                if (command.Disabled)
-                {
-                    json.Prop("disabled", GameAccess.Clean(command.disabledReason) ?? "");
-                }
-                json.EndObject();
-            }
+            });
             json.EndArray();
             json.EndObject();
         }
@@ -340,35 +343,38 @@ namespace RimWorldMcp.Bridge.Game
         {
             Thing thing = FindThing(query.RequireString("thing"));
             string name = query.RequireString("button");
-            List<Command> commands = CommandsOf(thing);
-            Command command = commands.FirstOrDefault(c => string.Equals(GameAccess.Clean(c.LabelCap), name, StringComparison.OrdinalIgnoreCase))
-                ?? throw new NotFoundException($"{thing.LabelShort} has no button named '{name}'. Buttons: {string.Join(" | ", commands.Select(c => GameAccess.Clean(c.LabelCap)))}.");
-            if (command.Disabled)
-            {
-                throw new BadRequestException($"That button is disabled: {GameAccess.Clean(command.disabledReason)}");
-            }
 
-            Action press;
-            switch (KindOf(command))
+            // Inside the guard, because buttons can look at the selection while being built as well.
+            PlayerInputGuard.Outcome outcome = PlayerInputGuard.Run(thing, () =>
             {
-                case "toggle":
-                    press = ((Command_Toggle)command).toggleAction;
-                    break;
-                case "button":
-                    press = ((Command_Action)command).action;
-                    break;
-                case "target":
-                    LocalTargetInfo target = ResolveTarget(query, thing, (Command_Target)command);
-                    press = () => ((Command_Target)command).action(target);
-                    break;
-                default:
-                    throw new BadRequestException("That button only works by hand, so the player has to press it.");
-            }
+                List<Command> commands = CommandsOf(thing);
+                Command command = commands.FirstOrDefault(c => string.Equals(GameAccess.Clean(c.LabelCap), name, StringComparison.OrdinalIgnoreCase))
+                    ?? throw new NotFoundException($"{GameAccess.Clean(thing.LabelShort)} has no button named '{name}'. Buttons: {string.Join(" | ", commands.Select(c => GameAccess.Clean(c.LabelCap)))}.");
+                if (command.Disabled)
+                {
+                    throw new BadRequestException($"That button is disabled: {GameAccess.Clean(command.disabledReason)}");
+                }
+
+                switch (KindOf(command))
+                {
+                    case "toggle":
+                        ((Command_Toggle)command).toggleAction();
+                        break;
+                    case "button":
+                        ((Command_Action)command).action();
+                        break;
+                    case "target":
+                        ((Command_Target)command).action(ResolveTarget(query, thing, (Command_Target)command));
+                        break;
+                    default:
+                        throw new BadRequestException("That button only works by hand, so the player has to press it.");
+                }
+            });
 
             json.BeginObject();
-            json.Prop("thing", thing.LabelShort);
-            json.Prop("button", GameAccess.Clean(command.LabelCap));
-            WriteOutcome(json, PlayerInputGuard.Run(press));
+            json.Prop("thing", GameAccess.Clean(thing.LabelShort));
+            json.Prop("button", name);
+            WriteOutcome(json, outcome);
             json.EndObject();
         }
 

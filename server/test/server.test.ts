@@ -56,6 +56,9 @@ describe("MCP server", () => {
           "move_pawns",
           "give_pawn_order",
           "use_gizmo",
+          "use_designator",
+          "draw_plan",
+          "remove_plan",
         ].includes(tool.name),
       );
       expect(tool.annotations?.destructiveHint, tool.name).toBe(false);

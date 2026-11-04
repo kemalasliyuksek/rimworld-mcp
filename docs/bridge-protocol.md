@@ -76,6 +76,11 @@ Failure looks like this:
 | `POST /v1/orders/give` | `pawns`, `x`, `z`, `order` | `give_pawn_order` |
 | `/v1/gizmos` | `thing` | `list_gizmos` |
 | `POST /v1/gizmos/use` | `thing`, `button`, `x`, `z`, `target` | `use_gizmo` |
+| `/v1/designators` | `category` | `list_designators` |
+| `POST /v1/designators/use` | `designator`, `cells`, `stuff`, `rotation` | `use_designator` |
+| `/v1/plans` | `map` | `list_plans` |
+| `POST /v1/plans/draw` | `cells`, `color`, `label`, `map` | `draw_plan` |
+| `POST /v1/plans/remove` | `plan`, `map` | `remove_plan` |
 | `/v1/threats` | `map` | `get_threats` |
 | `/v1/resources` | `map` | `get_resources` |
 | `/v1/base` | `sections`, `map` | `get_base` |

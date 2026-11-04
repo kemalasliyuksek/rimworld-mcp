@@ -30,6 +30,9 @@ namespace RimWorldMcp.Bridge.Game
             new[] { "W", "work bench" },
             new[] { "F", "other building or furniture" },
             new[] { "%", "natural rock" },
+            new[] { "m", "rock marked for mining" },
+            new[] { "b", "blueprint or building under construction" },
+            new[] { "*", "planning mark" },
             new[] { "i", "item on the ground" },
             new[] { "t", "tree" },
             new[] { "p", "other plant" },
@@ -104,6 +107,10 @@ namespace RimWorldMcp.Bridge.Game
                         return PawnSymbol(pawn);
                     }
                 }
+                else if (thing is Blueprint || thing is Frame)
+                {
+                    building = 'b';
+                }
                 else if (thing is Building || thing.def.building != null)
                 {
                     building = BuildingSymbol(thing);
@@ -118,6 +125,10 @@ namespace RimWorldMcp.Bridge.Game
                 }
             }
 
+            if (building == '%' && map.designationManager.DesignationAt(cell, DesignationDefOf.Mine) != null)
+            {
+                return 'm';
+            }
             if (building != '\0')
             {
                 return building;
@@ -129,6 +140,10 @@ namespace RimWorldMcp.Bridge.Game
             if (plant != '\0')
             {
                 return plant;
+            }
+            if (map.planManager.PlanAt(cell) != null)
+            {
+                return '*';
             }
 
             Zone zone = map.zoneManager.ZoneAt(cell);

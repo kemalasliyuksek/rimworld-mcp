@@ -59,8 +59,9 @@ tile, as map preview mods do. It reveals nothing else about the map, such as ore
 
 It never touches the code or files of the game or its mods, and it works in the background without
 touching your mouse, keyboard, selection or windows. If you ask, it can give orders during play, such as
-drafting colonists, moving them, and anything in their right-click menu or on their buttons, and it can
-change work priorities and schedules. You can turn these off with the switches in the mod's settings.
+drafting colonists, moving them, and anything in their right-click menu or on their buttons, change work
+priorities and schedules, and use the Architect menu to build, mine or make zones. It can draw a layout as
+plan marks for you to approve before anything is built. You can turn these off with the switches in the mod's settings.
 If you ask, it can also change your RimWorld settings, mod list and mods' settings. On the new game
 screens it can act for you if you ask: choose the scenario, storyteller and world settings, move the
 camera to a site, set up your ideoligion, or find and edit colonists. You still review the result and press Next yourself. Editing colonists can go beyond what

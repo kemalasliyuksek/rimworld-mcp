@@ -197,6 +197,65 @@ export const tools: readonly ToolDefinition[] = [
     },
   },
   {
+    name: "list_designators",
+    title: "Architect menu",
+    description:
+      "What the game's Architect menu offers right now, including what mods add and only what research allows: buildings, floors, zones, and orders such as mining, cutting, hunting and cancelling. Without a category it lists the categories. Each entry's id goes to use_designator.",
+    path: "/v1/designators",
+    inputSchema: {
+      category: z.string().optional().describe("Category defName, such as Orders, Structure or Zone."),
+    },
+  },
+  {
+    name: "use_designator",
+    title: "Use the Architect menu",
+    description:
+      "Only when the player asks. Applies one designator to cells on the map the player is looking at: places blueprints that builders will construct, marks rock to mine, marks plants to cut, makes zones, and so on. The game's own checks apply, and rejected cells are listed with the reason. Read view_map first to choose cells. If the player wants to see a layout first, draw it with draw_plan and wait for their approval.",
+    path: "/v1/designators/use",
+    acts: true,
+    inputSchema: {
+      designator: z.string().min(1).describe("An id from list_designators."),
+      cells: z
+        .string()
+        .min(1)
+        .describe("Parts separated by semicolons: a cell (10,20), a filled rectangle (10,20-15,25), or the edge of one (outline:10,20-15,25), which suits walls. For a building larger than one cell, each cell is where its center goes."),
+      stuff: z.string().optional().describe("Material for a building made from one, as a ThingDef defName such as WoodLog, Steel or BlocksGranite. Defaults to the game's choice."),
+      rotation: z.enum(["North", "East", "South", "West"]).optional().describe("For a building. Defaults to North."),
+    },
+  },
+  {
+    name: "list_plans",
+    title: "Plans",
+    description: "The plans drawn on the map, with their ids and areas, and the colors available. view_map marks planned cells with *.",
+    path: "/v1/plans",
+    inputSchema: { map: mapParam },
+  },
+  {
+    name: "draw_plan",
+    title: "Draw a plan",
+    description:
+      "Only when the player asks. Draws planning marks on the map for the player to look at, using the game's own plan feature. They cost nothing and nobody acts on them, which makes them the way to propose a layout: draw it, ask the player, and only then build it with use_designator. Use a different color or label for each part so that they are easy to tell apart.",
+    path: "/v1/plans/draw",
+    acts: true,
+    inputSchema: {
+      cells: z.string().min(1).describe("Parts separated by semicolons: a cell (10,20), a filled rectangle (10,20-15,25), or the edge of one (outline:10,20-15,25)."),
+      color: z.string().optional().describe("A color from list_plans."),
+      label: z.string().optional(),
+      map: mapParam,
+    },
+  },
+  {
+    name: "remove_plan",
+    title: "Remove a plan",
+    description: "Only when the player asks, or to clean up a proposal they turned down or that has been built.",
+    path: "/v1/plans/remove",
+    acts: true,
+    inputSchema: {
+      plan: z.string().min(1).describe("A plan id from list_plans, or all."),
+      map: mapParam,
+    },
+  },
+  {
     name: "get_threats",
     title: "Threats and defenses",
     description:

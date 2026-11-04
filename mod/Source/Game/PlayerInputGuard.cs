@@ -11,6 +11,10 @@ namespace RimWorldMcp.Bridge.Game
     /// else. Much of that code, in the game and in mods, selects things, starts targeting or opens a
     /// window, and there is no way to tell beforehand. Anything it did to the player's input is undone
     /// here, and the result says that the player has to do that step themselves.
+    ///
+    /// Many buttons also act on whatever is selected rather than on their own pawn, so the thing being
+    /// acted for is selected while the code runs. Nothing is drawn in that time, so the player never sees
+    /// it, and the selection list is changed directly because Selector.Select can also change the map.
     /// </summary>
     internal static class PlayerInputGuard
     {
@@ -20,9 +24,10 @@ namespace RimWorldMcp.Bridge.Game
             public string NeedsPlayer;
         }
 
-        public static Outcome Run(Action action)
+        public static Outcome Run(Thing actingFor, Action action)
         {
             List<object> selection = Find.Selector.SelectedObjects.ToList();
+            ReplaceSelection(actingFor != null ? new List<object> { actingFor } : new List<object>());
             Designator designator = Find.DesignatorManager.SelectedDesignator;
             bool wasTargeting = Find.Targeter.IsTargeting;
             HashSet<Window> windows = new HashSet<Window>(Find.WindowStack.Windows);
@@ -58,23 +63,16 @@ namespace RimWorldMcp.Bridge.Game
                     }
                 }
 
-                RestoreSelection(selection);
+                ReplaceSelection(selection.Where(selected => !(selected is Thing thing) || !thing.Destroyed).ToList());
             }
             return outcome;
         }
 
-        private static void RestoreSelection(List<object> selection)
+        private static void ReplaceSelection(List<object> selection)
         {
-            Selector selector = Find.Selector;
-            if (selector.SelectedObjects.Count == selection.Count && selector.SelectedObjects.All(selection.Contains))
-            {
-                return;
-            }
-            selector.ClearSelection();
-            foreach (object selected in selection)
-            {
-                selector.Select(selected, playSound: false, forceDesignatorDeselect: false);
-            }
+            List<object> current = Find.Selector.SelectedObjects;
+            current.Clear();
+            current.AddRange(selection);
         }
     }
 }
