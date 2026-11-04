@@ -3,7 +3,7 @@
 All tools are read-only, except for those marked as acting on request: `configure_new_game`, `show_site`,
 `set_start_options`, `configure_ideo`, `find_starting_pawn`, `swap_starting_pawns`, `edit_starting_pawn`,
 `set_game_settings`, `configure_mods`, `set_mod_settings`, `set_work_priorities`, `set_schedule`,
-`set_drafted`, `move_pawns`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan`, `remove_plan`, `set_game_speed`, `set_research`, `add_bill`, `remove_bill`, `set_crop`, `answer_dialog`, `answer_letter`, `set_pawn_policies`, `set_stockpile`, `trade`, `form_caravan`, `send_caravan`, and the cheats below. The mod's settings can turn acting tools, cheats and hidden information off. Those marked with `map` accept an optional map id and default to the map the player
+`set_drafted`, `move_pawns`, `attack_target`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan`, `remove_plan`, `set_game_speed`, `set_research`, `add_bill`, `remove_bill`, `set_crop`, `answer_dialog`, `answer_letter`, `set_pawn_policies`, `set_stockpile`, `trade`, `form_caravan`, `send_caravan`, and the cheats below. The mod's settings can turn acting tools, cheats and hidden information off. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -25,6 +25,7 @@ is looking at.
 | `set_schedule` (`pawn`, `hours`) | Changes hours on the game's Schedule tab. Only when the player asks. |
 | `set_drafted` (`pawns`, `drafted`, `fire_at_will`) | Drafts or releases colonists. Only when the player asks. |
 | `move_pawns` (`pawns`, `x`, `z`) | Drafts colonists and sends them to a cell. Only when the player asks. |
+| `attack_target` (`pawns`, `target`, `mode`) | Orders an attack. Only when the player asks. |
 | `list_pawn_orders` (`pawn`, `x`, `z`) | What the right-click menu offers a colonist on a cell, including what mods add. |
 | `give_pawn_order` (`pawns`, `x`, `z`, `order`) | Chooses one of those orders. Only when the player asks. |
 | `list_gizmos` (`thing`) | The buttons of a selected pawn or building, including those from mods. |

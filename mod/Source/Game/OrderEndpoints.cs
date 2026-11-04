@@ -171,6 +171,58 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
+        /// <summary>The same steps as the game's attack order, for either the pawn's weapon or its fists.</summary>
+        public static void Attack(QueryParams query, JsonWriter json)
+        {
+            List<Pawn> pawns = ResolvePawns(query);
+            Thing target = FindThing(query.RequireString("target"));
+            string mode = query.GetString("mode", "any");
+            if (mode != "any" && mode != "melee" && mode != "ranged")
+            {
+                throw new BadRequestException("Parameter 'mode' must be any, melee or ranged.");
+            }
+
+            json.BeginObject();
+            json.Key("results").BeginArray();
+            foreach (Pawn pawn in pawns)
+            {
+                WriteResult(json, pawn, _ =>
+                {
+                    if (pawn.drafter == null || !pawn.CanTakeOrder)
+                    {
+                        throw new BadRequestException($"{pawn.LabelShort} cannot take orders.");
+                    }
+                    if (!pawn.drafter.Drafted && WhyCannotBeDrafted(pawn) == null)
+                    {
+                        pawn.drafter.Drafted = true;
+                    }
+
+                    string failure;
+                    Action attack;
+                    switch (mode)
+                    {
+                        case "melee":
+                            attack = FloatMenuUtility.GetMeleeAttackAction(pawn, target, out failure);
+                            break;
+                        case "ranged":
+                            attack = FloatMenuUtility.GetRangedAttackAction(pawn, target, out failure);
+                            break;
+                        default:
+                            attack = FloatMenuUtility.GetAttackAction(pawn, target, out failure);
+                            break;
+                    }
+                    if (attack == null)
+                    {
+                        throw new BadRequestException(GameAccess.Clean(failure).NullOrEmpty() ? $"{pawn.LabelShort} cannot attack that." : GameAccess.Clean(failure));
+                    }
+                    attack();
+                    json.Prop("attacking", GameAccess.Clean(target.LabelShort));
+                });
+            }
+            json.EndArray();
+            json.EndObject();
+        }
+
         // The game builds this menu for the map on screen, so a pawn elsewhere has none to offer.
         private static List<FloatMenuOption> OptionsFor(Pawn pawn, IntVec3 cell)
         {
@@ -265,6 +317,13 @@ namespace RimWorldMcp.Bridge.Game
             return GameAccess.FindPawn(id);
         }
 
+        // Some buttons, such as a weapon's, show an icon and have no label at all.
+        private static string ButtonName(Command command)
+        {
+            string label = GameAccess.Clean(command.LabelCap);
+            return label.NullOrEmpty() ? command.GetType().Name : label;
+        }
+
         // A class that overrides ProcessInput may rely on steps that calling its action directly would skip.
         private static string KindOf(Command command)
         {
@@ -317,7 +376,7 @@ namespace RimWorldMcp.Bridge.Game
                 foreach (Command command in CommandsOf(thing))
                 {
                     json.BeginObject();
-                    json.Prop("button", GameAccess.Clean(command.LabelCap));
+                    json.Prop("button", ButtonName(command));
                     json.Prop("description", GameAccess.Truncate(GameAccess.Clean(command.Desc), MaxDescription));
                     string kind = KindOf(command);
                     if (kind != null)
@@ -352,8 +411,8 @@ namespace RimWorldMcp.Bridge.Game
             PlayerInputGuard.Outcome outcome = PlayerInputGuard.Run(thing, () =>
             {
                 List<Command> commands = CommandsOf(thing);
-                Command command = commands.FirstOrDefault(c => string.Equals(GameAccess.Clean(c.LabelCap), name, StringComparison.OrdinalIgnoreCase))
-                    ?? throw new NotFoundException($"{GameAccess.Clean(thing.LabelShort)} has no button named '{name}'. Buttons: {string.Join(" | ", commands.Select(c => GameAccess.Clean(c.LabelCap)))}.");
+                Command command = commands.FirstOrDefault(c => string.Equals(ButtonName(c), name, StringComparison.OrdinalIgnoreCase))
+                    ?? throw new NotFoundException($"{GameAccess.Clean(thing.LabelShort)} has no button named '{name}'. Buttons: {string.Join(" | ", commands.Select(ButtonName))}.");
                 if (command.Disabled)
                 {
                     throw new BadRequestException($"That button is disabled: {GameAccess.Clean(command.disabledReason)}");

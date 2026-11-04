@@ -177,6 +177,19 @@ export const tools: readonly ToolDefinition[] = [
     },
   },
   {
+    name: "attack_target",
+    title: "Attack",
+    description:
+      "Only when the player asks. Drafts colonists and orders them to attack a target, with their weapon or in melee. Ranged attackers must already be in range with a clear shot, and a failure says why. Get target ids from list_pawns or inspect_cell.",
+    path: "/v1/orders/attack",
+    acts: true,
+    inputSchema: {
+      pawns: z.string().min(1).describe("Comma-separated pawn ids or names."),
+      target: z.string().min(1).describe("Thing id or pawn name."),
+      mode: z.enum(["any", "melee", "ranged"]).optional().describe("Defaults to any, which uses the pawn's weapon."),
+    },
+  },
+  {
     name: "list_pawn_orders",
     title: "Orders on a cell",
     description:

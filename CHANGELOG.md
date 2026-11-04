@@ -9,7 +9,7 @@ All notable changes to this project are documented here. The format is based on
 ### Added
 
 - RimWorld 1.6 bridge mod with a local, token-protected HTTP API that cannot change the game's code or files.
-- MCP server with 74 tools covering the colony, the player's focus, pawns, threats, resources, the
+- MCP server with 75 tools covering the colony, the player's focus, pawns, threats, resources, the
   base, research, events, the world, the map, game data and mods.
 - Scenario, storyteller, difficulty and world settings tools on the first new game screens, on the
   player's request.

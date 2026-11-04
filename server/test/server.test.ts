@@ -56,6 +56,7 @@ describe("MCP server", () => {
           "move_pawns",
           "give_pawn_order",
           "use_gizmo",
+          "attack_target",
           "use_designator",
           "draw_plan",
           "remove_plan",

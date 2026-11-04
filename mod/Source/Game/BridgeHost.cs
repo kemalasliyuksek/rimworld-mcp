@@ -66,6 +66,7 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/pawn/schedule", WorkEndpoints.SetSchedule, "POST");
             Register(endpoints, "/v1/orders/draft", OrderEndpoints.SetDrafted, "POST");
             Register(endpoints, "/v1/orders/move", OrderEndpoints.Move, "POST");
+            Register(endpoints, "/v1/orders/attack", OrderEndpoints.Attack, "POST");
             Register(endpoints, "/v1/orders", OrderEndpoints.ListOrders);
             Register(endpoints, "/v1/orders/give", OrderEndpoints.GiveOrder, "POST");
             Register(endpoints, "/v1/gizmos", OrderEndpoints.ListGizmos);

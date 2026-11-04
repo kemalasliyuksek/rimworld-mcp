@@ -245,7 +245,8 @@ namespace RimWorldMcp.Bridge.Game
             thoughts.GetDistinctMoodThoughtGroups(groups);
 
             json.Key("mood_thoughts").BeginArray();
-            foreach (Thought group in groups.OrderBy(t => thoughts.MoodOffsetOfGroup(t)))
+            // Some thoughts, such as an addiction that is satisfied, have no label and the game hides them.
+            foreach (Thought group in groups.Where(t => !t.LabelCap.NullOrEmpty()).OrderBy(t => thoughts.MoodOffsetOfGroup(t)))
             {
                 json.BeginObject();
                 json.Prop("label", GameAccess.Clean(group.LabelCap));
