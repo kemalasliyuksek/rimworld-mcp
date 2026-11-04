@@ -168,54 +168,25 @@ namespace RimWorldMcp.Bridge.Game
                 throw new BadRequestException("Only buildings take 'stuff' and 'rotation'.");
             }
 
+            bool instant = query.GetString("instant") == "true";
+            if (instant)
+            {
+                GameAccess.RequireCheats();
+            }
+
             int done = 0;
             var rejections = new List<(int X, int Z, string Reason)>();
-            PlayerInputGuard.Outcome outcome = PlayerInputGuard.Run(null, () =>
+            bool godModeBefore = DebugSettings.godMode;
+            DebugSettings.godMode = instant || godModeBefore;
+            PlayerInputGuard.Outcome outcome;
+            try
             {
-                var accepted = new List<IntVec3>();
-                foreach ((int x, int z) in cells)
-                {
-                    var cell = new IntVec3(x, 0, z);
-                    AcceptanceReport report = cell.InBounds(map) ? designator.CanDesignateCell(cell) : "outside the map";
-                    if (report.Accepted)
-                    {
-                        accepted.Add(cell);
-                    }
-                    else
-                    {
-                        rejections.Add((x, z, GameAccess.Clean(report.Reason)));
-                    }
-                }
-
-                // Zones and the like have to see all their cells at once. For the rest, each placed cell
-                // can rule out the next, so each one is checked again right before it is placed.
-                if (designator.GetType().GetMethod(nameof(Designator.DesignateMultiCell)).DeclaringType != typeof(Designator))
-                {
-                    if (accepted.Count > 0)
-                    {
-                        designator.DesignateMultiCell(accepted);
-                        done = accepted.Count;
-                    }
-                    return;
-                }
-                foreach (IntVec3 cell in accepted)
-                {
-                    AcceptanceReport report = designator.CanDesignateCell(cell);
-                    if (report.Accepted)
-                    {
-                        designator.DesignateSingleCell(cell);
-                        done++;
-                    }
-                    else
-                    {
-                        rejections.Add((cell.x, cell.z, GameAccess.Clean(report.Reason)));
-                    }
-                }
-                if (done > 0)
-                {
-                    designator.Finalize(true);
-                }
-            });
+                outcome = PlayerInputGuard.Run(null, () => done = ApplyDesignator(designator, cells, map, rejections));
+            }
+            finally
+            {
+                DebugSettings.godMode = godModeBefore;
+            }
 
             json.BeginObject();
             json.Prop("designator", IdOf(designator));
@@ -236,6 +207,60 @@ namespace RimWorldMcp.Bridge.Game
                 json.Prop("needs_player", outcome.NeedsPlayer);
             }
             json.EndObject();
+        }
+
+        private static int ApplyDesignator(Designator designator, List<(int X, int Z)> cells, Map map, List<(int X, int Z, string Reason)> rejections)
+        {
+            var accepted = new List<IntVec3>();
+            foreach ((int x, int z) in cells)
+            {
+                var cell = new IntVec3(x, 0, z);
+                AcceptanceReport report = cell.InBounds(map) ? designator.CanDesignateCell(cell) : "outside the map";
+                if (report.Accepted)
+                {
+                    accepted.Add(cell);
+                }
+                else
+                {
+                    rejections.Add((x, z, ReasonFor(report)));
+                }
+            }
+
+            // Zones and the like have to see all their cells at once. For the rest, each placed cell
+            // can rule out the next, so each one is checked again right before it is placed.
+            if (designator.GetType().GetMethod(nameof(Designator.DesignateMultiCell)).DeclaringType != typeof(Designator))
+            {
+                if (accepted.Count > 0)
+                {
+                    designator.DesignateMultiCell(accepted);
+                }
+                return accepted.Count;
+            }
+
+            int done = 0;
+            foreach (IntVec3 cell in accepted)
+            {
+                AcceptanceReport report = designator.CanDesignateCell(cell);
+                if (report.Accepted)
+                {
+                    designator.DesignateSingleCell(cell);
+                    done++;
+                }
+                else
+                {
+                    rejections.Add((cell.x, cell.z, ReasonFor(report)));
+                }
+            }
+            if (done > 0)
+            {
+                designator.Finalize(true);
+            }
+            return done;
+        }
+
+        private static string ReasonFor(AcceptanceReport report)
+        {
+            return report.Reason.NullOrEmpty() ? "The game gave no reason. There may be nothing here for this to apply to." : GameAccess.Clean(report.Reason);
         }
 
         public static void ListPlans(QueryParams query, JsonWriter json)

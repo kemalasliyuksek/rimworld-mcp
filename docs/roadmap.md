@@ -33,10 +33,12 @@ Everything a player can do, and everything cheats can do, always on the player's
 - [x] Switches in the mod's settings for actions, cheats and hidden information
 - [x] Orders for pawns, such as drafting, moving, attacking and working on a target
 - [x] Building and plans, including laying out a whole base as plan lines for the player to approve
-- [ ] Research, bills, zones, trade, caravans and dialog choices
-- [ ] Game speed, so that an assistant can play for the player when asked
-- [ ] Cheats, such as spawning items, editing pawns and triggering events
-- [ ] Hidden information, when the player asks about it
+- [x] Research, bills, crops, zones and dialog choices
+- [x] Game speed, so that an assistant can play for the player when asked
+- [x] Cheats, such as spawning items, editing pawns and triggering events
+- [x] Hidden information, when the player asks about it
+- [ ] Trade and caravans, whose windows need their own tools
+- [ ] Allowed areas, apparel and drug policies, and storage filters
 
 ## Compatibility
 

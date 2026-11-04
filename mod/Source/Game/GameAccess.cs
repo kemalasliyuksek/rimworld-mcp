@@ -68,6 +68,22 @@ namespace RimWorldMcp.Bridge.Game
             return map.mapPawns.AllPawnsSpawned.Where(IsVisible);
         }
 
+        public static void RequireCheats()
+        {
+            if (!McpMod.Settings.allowCheats)
+            {
+                throw new PermissionDisabledException("Cheats");
+            }
+        }
+
+        public static void RequireHiddenInformation()
+        {
+            if (!McpMod.Settings.allowHiddenInformation)
+            {
+                throw new PermissionDisabledException("Hidden information");
+            }
+        }
+
         /// <summary>
         /// Items the player can see outside storage. The game's resource counter leaves these out, so
         /// without them a new colony's supplies, still lying where they landed, would look like nothing.

@@ -14,11 +14,16 @@ namespace RimWorldMcp.Bridge.Game
         private const int MaxText = 3000;
 
         // Dialog_NodeTree keeps its node protected, and DiaOption keeps its label protected.
-        private static readonly FieldInfo CurrentNodeField =
+        internal static readonly FieldInfo CurrentNodeField =
             typeof(Dialog_NodeTree).GetField("curNode", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static readonly FieldInfo OptionTextField =
             typeof(DiaOption).GetField("text", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        internal static string OptionText(DiaOption option)
+        {
+            return GameAccess.Clean(OptionTextField?.GetValue(option) as string);
+        }
 
         public static void Focus(QueryParams query, JsonWriter json)
         {
@@ -116,6 +121,17 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     json.Prop("title", GameAccess.Clean(messageBox.title));
                     json.Prop("text", GameAccess.Truncate(GameAccess.Clean(messageBox.text), MaxText));
+                    json.Key("options").BeginArray();
+                    foreach (string button in new[] { messageBox.buttonAText, messageBox.buttonBText, messageBox.buttonCText })
+                    {
+                        if (button != null)
+                        {
+                            json.BeginObject();
+                            json.Prop("text", GameAccess.Clean(button));
+                            json.EndObject();
+                        }
+                    }
+                    json.EndArray();
                 }
                 else if (window is Dialog_NodeTree tree)
                 {
@@ -138,7 +154,7 @@ namespace RimWorldMcp.Bridge.Game
             foreach (DiaOption option in node.options)
             {
                 json.BeginObject();
-                json.Prop("text", GameAccess.Clean(OptionTextField?.GetValue(option) as string));
+                json.Prop("text", OptionText(option));
                 json.Prop("disabled", option.disabled);
                 if (option.disabled)
                 {

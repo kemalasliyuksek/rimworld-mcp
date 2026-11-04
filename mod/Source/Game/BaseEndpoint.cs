@@ -151,7 +151,7 @@ namespace RimWorldMcp.Bridge.Game
         private static void WriteProduction(JsonWriter json, Map map)
         {
             json.Key("work_benches").BeginArray();
-            foreach (Building_WorkTable table in map.listerBuildings.allBuildingsColonist.OfType<Building_WorkTable>())
+            foreach (Building table in map.listerBuildings.allBuildingsColonist.Where(b => b is IBillGiver && b.def.AllRecipes.Count > 0))
             {
                 json.BeginObject();
                 json.Prop("id", table.ThingID);
@@ -163,7 +163,7 @@ namespace RimWorldMcp.Bridge.Game
                     json.Prop("powered", power.PowerOn);
                 }
                 json.Key("bills").BeginArray();
-                foreach (Bill bill in table.billStack.Bills)
+                foreach (Bill bill in ((IBillGiver)table).BillStack.Bills)
                 {
                     WriteBill(json, bill);
                 }

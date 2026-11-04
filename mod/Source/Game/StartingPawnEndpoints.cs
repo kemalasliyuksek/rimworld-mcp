@@ -182,6 +182,27 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
+        /// <summary>The same edits for a game in progress, on any pawn the player can see.</summary>
+        public static void EditDuringPlay(QueryParams query, JsonWriter json)
+        {
+            Pawn pawn = GameAccess.FindPawn(query.RequireString("pawn"));
+            if (pawn.story == null || pawn.skills == null)
+            {
+                throw new BadRequestException($"Only people can be edited, and {pawn.LabelShort} is not one.");
+            }
+            if (query.GetString("possessions") != null)
+            {
+                throw new BadRequestException("Possessions only exist before the game starts. Use spawn_thing instead.");
+            }
+            PawnEdit edit = PawnEdit.Validate(pawn, query);
+            edit.Apply(pawn);
+
+            json.BeginObject();
+            json.Prop("pawn", pawn.LabelShort);
+            json.Prop("edited", true);
+            json.EndObject();
+        }
+
         private static void WritePawn(JsonWriter json, int index)
         {
             Pawn pawn = Pawns[index];
@@ -466,7 +487,7 @@ namespace RimWorldMcp.Bridge.Game
         }
 
         /// <summary>A checked set of changes. Validating first means a typo cannot leave a half-edited pawn.</summary>
-        private sealed class PawnEdit
+        internal sealed class PawnEdit
         {
             private string firstName;
             private string nickname;
@@ -791,7 +812,10 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     // The same steps the game takes when it rerolls a colonist. Relatives shared with
                     // another colonist survive, and world pawn cleanup removes them once unconnected.
-                    PawnUtility.TryDestroyStartingColonistFamily(pawn);
+                    if (Find.GameInitData != null)
+                    {
+                        PawnUtility.TryDestroyStartingColonistFamily(pawn);
+                    }
                     pawn.relations.ClearAllRelations();
                 }
 

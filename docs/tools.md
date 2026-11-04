@@ -3,7 +3,7 @@
 All tools are read-only, except for those marked as acting on request: `configure_new_game`, `show_site`,
 `set_start_options`, `configure_ideo`, `find_starting_pawn`, `swap_starting_pawns`, `edit_starting_pawn`,
 `set_game_settings`, `configure_mods`, `set_mod_settings`, `set_work_priorities`, `set_schedule`,
-`set_drafted`, `move_pawns`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan` and `remove_plan`. The mod's settings can turn acting tools off. Those marked with `map` accept an optional map id and default to the map the player
+`set_drafted`, `move_pawns`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan`, `remove_plan`, `set_game_speed`, `set_research`, `add_bill`, `remove_bill`, `set_crop`, `answer_dialog`, `answer_letter`, and the cheats below. The mod's settings can turn acting tools, cheats and hidden information off. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -51,6 +51,35 @@ is looking at.
 | `remove_plan` (`plan`, `map`) | Removes one plan, or `all`. |
 
 Cells are parts separated by semicolons: a cell (`10,20`), a filled rectangle (`10,20-15,25`), or the edge of one (`outline:10,20-15,25`).
+
+## Running the colony
+
+| Tool | What it does |
+| --- | --- |
+| `set_game_speed` (`speed`) | Pauses or sets the speed. Only when the player asks. |
+| `set_research` (`project`) | Chooses the research. Only when the player asks. |
+| `list_recipes` (`thing`) | What a work bench can make. |
+| `add_bill` (`thing`, `recipe`, `repeat`, `count`) | Adds a bill. Only when the player asks. |
+| `remove_bill` (`thing`, `index`) | Removes a bill. Only when the player asks. |
+| `set_crop` (`x`, `z`, `plant`) | Sets what a growing zone sows. Only when the player asks. |
+| `answer_dialog` (`choice`) | Chooses an option in the dialog on screen. Only when the player asks. |
+| `list_letters` | Letters with their text and choices. |
+| `answer_letter` (`letter`, `choice`) | Chooses an option in a letter. Only when the player asks. |
+
+## Cheats
+
+Only when the player asks for them, and only while the Cheats switch in the mod's settings is on.
+
+| Tool | What it does |
+| --- | --- |
+| `spawn_thing` (`def`, `x`, `z`, `count`, `stuff`, `quality`, `map`) | Creates items, buildings or plants. |
+| `spawn_pawn` (`kind`, `x`, `z`, `faction`, `count`, `map`) | Creates people, animals or enemies. |
+| `trigger_incident` (`incident`, `points`, `map`) | Fires an event now. |
+| `complete_research` (`project`) | Finishes a project, or `all`. |
+| `edit_pawn` (`pawn` and the attributes of `edit_starting_pawn`) | Edits a person during play. |
+| `reveal_map` (`map`) | Removes all fog. Also needs the Hidden information switch. |
+
+`use_designator` also takes `instant`, which finishes the work at once and free of cost, and `view_map` and `inspect_cell` take `include_hidden`, only for when the player asks what is hidden.
 
 ## Map
 

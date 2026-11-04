@@ -48,7 +48,12 @@ namespace RimWorldMcp.Bridge.Game
                 foreach (Window window in Find.WindowStack.Windows.Where(w => !windows.Contains(w) && !(w is ImmediateWindow)).ToList())
                 {
                     Find.WindowStack.TryRemove(window, doCloseSound: false);
-                    outcome.NeedsPlayer = "It opens a window with more choices.";
+
+                    // The inspect pane opens for anything selected, which says nothing about the step.
+                    if (!(window is MainTabWindow))
+                    {
+                        outcome.NeedsPlayer = $"It opens a window with more choices ({window.GetType().Name}).";
+                    }
                 }
 
                 if (Find.DesignatorManager.SelectedDesignator != designator)

@@ -87,7 +87,7 @@ namespace RimWorldMcp.Bridge.Game
             // The game's weapon group also holds things that merely can be swung, such as wood.
             List<Thing> items = map.listerThings.ThingsInGroup(group)
                 .Where(t => GameAccess.IsVisible(t) && t.IsInAnyStorage())
-                .Where(t => group != ThingRequestGroup.Weapon || t.def.equipmentType == EquipmentType.Primary)
+                .Where(t => group != ThingRequestGroup.Weapon || t.def.IsRangedWeapon || t.def.IsWithinCategory(ThingCategoryDefOf.Weapons))
                 .ToList();
 
             json.Key(key).BeginObject();

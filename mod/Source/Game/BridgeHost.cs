@@ -16,6 +16,8 @@ namespace RimWorldMcp.Bridge.Game
 
         private const int MaxRequestsPerFrame = 4;
 
+        private static int actionCount;
+
         private readonly MainThreadQueue queue = new MainThreadQueue();
         private BridgeServer server;
         private bool discoveryWritten;
@@ -73,6 +75,21 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/plans", ArchitectEndpoints.ListPlans);
             Register(endpoints, "/v1/plans/draw", ArchitectEndpoints.DrawPlan, "POST");
             Register(endpoints, "/v1/plans/remove", ArchitectEndpoints.RemovePlan, "POST");
+            Register(endpoints, "/v1/colony/speed", ColonyEndpoints.SetSpeed, "POST");
+            Register(endpoints, "/v1/colony/research", ColonyEndpoints.SetResearch, "POST");
+            Register(endpoints, "/v1/colony/recipes", ColonyEndpoints.ListRecipes);
+            Register(endpoints, "/v1/colony/bills/add", ColonyEndpoints.AddBill, "POST");
+            Register(endpoints, "/v1/colony/bills/remove", ColonyEndpoints.RemoveBill, "POST");
+            Register(endpoints, "/v1/colony/crop", ColonyEndpoints.SetCrop, "POST");
+            Register(endpoints, "/v1/dialogs/answer", ColonyEndpoints.AnswerDialog, "POST");
+            Register(endpoints, "/v1/letters", ColonyEndpoints.ListLetters);
+            Register(endpoints, "/v1/letters/answer", ColonyEndpoints.AnswerLetter, "POST");
+            Register(endpoints, "/v1/cheats/spawn-thing", CheatEndpoints.SpawnThing, "POST", isCheat: true);
+            Register(endpoints, "/v1/cheats/spawn-pawn", CheatEndpoints.SpawnPawn, "POST", isCheat: true);
+            Register(endpoints, "/v1/cheats/incident", CheatEndpoints.TriggerIncident, "POST", isCheat: true);
+            Register(endpoints, "/v1/cheats/research", CheatEndpoints.CompleteResearch, "POST", isCheat: true);
+            Register(endpoints, "/v1/cheats/edit-pawn", StartingPawnEndpoints.EditDuringPlay, "POST", isCheat: true);
+            Register(endpoints, "/v1/cheats/reveal-map", CheatEndpoints.RevealMap, "POST", isCheat: true);
             Register(endpoints, "/v1/threats", ThreatEndpoint.Threats);
             Register(endpoints, "/v1/resources", ResourceEndpoint.Resources);
             Register(endpoints, "/v1/base", BaseEndpoint.Base);
@@ -115,14 +132,22 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     throw new PermissionDisabledException("Actions");
                 }
-                if (isCheat && !McpMod.Settings.allowCheats)
+                if (isCheat)
                 {
-                    throw new PermissionDisabledException("Cheats");
+                    GameAccess.RequireCheats();
                 }
 
                 // Some game getters consume random numbers. Observing must never alter the
-                // sequence that the simulation sees.
-                Rand.PushState();
+                // sequence that the simulation sees. Actions get a seed of their own, because the
+                // sequence stands still while paused, and each new pawn would otherwise be the same.
+                if (method == "POST")
+                {
+                    Rand.PushState(Environment.TickCount + ++actionCount);
+                }
+                else
+                {
+                    Rand.PushState();
+                }
                 try
                 {
                     handler(query, json);

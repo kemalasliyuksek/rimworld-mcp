@@ -47,6 +47,11 @@ namespace RimWorldMcp.Bridge.Game
         public static void View(QueryParams query, JsonWriter json)
         {
             Map map = GameAccess.ResolveMap(query);
+            bool includeHidden = query.GetString("include_hidden") == "true";
+            if (includeHidden)
+            {
+                GameAccess.RequireHiddenInformation();
+            }
             int width = query.GetInt("width", DefaultViewSize, 1, MaxViewSize);
             int height = query.GetInt("height", DefaultViewSize, 1, MaxViewSize);
 
@@ -73,7 +78,7 @@ namespace RimWorldMcp.Bridge.Game
                 row.Clear();
                 for (int x = minX; x <= maxX; x++)
                 {
-                    row.Append(SymbolAt(new IntVec3(x, 0, z), map));
+                    row.Append(SymbolAt(new IntVec3(x, 0, z), map, includeHidden));
                 }
                 json.Value(row.ToString());
             }
@@ -87,9 +92,9 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
-        internal static char SymbolAt(IntVec3 cell, Map map)
+        internal static char SymbolAt(IntVec3 cell, Map map, bool includeHidden = false)
         {
-            if (cell.Fogged(map))
+            if (!includeHidden && cell.Fogged(map))
             {
                 return '?';
             }
@@ -102,7 +107,7 @@ namespace RimWorldMcp.Bridge.Game
             {
                 if (thing is Pawn pawn)
                 {
-                    if (GameAccess.IsVisible(pawn))
+                    if (includeHidden || GameAccess.IsVisible(pawn))
                     {
                         return PawnSymbol(pawn);
                     }
@@ -133,6 +138,10 @@ namespace RimWorldMcp.Bridge.Game
             {
                 return building;
             }
+            if (map.planManager.PlanAt(cell) != null)
+            {
+                return '*';
+            }
             if (item)
             {
                 return 'i';
@@ -140,10 +149,6 @@ namespace RimWorldMcp.Bridge.Game
             if (plant != '\0')
             {
                 return plant;
-            }
-            if (map.planManager.PlanAt(cell) != null)
-            {
-                return '*';
             }
 
             Zone zone = map.zoneManager.ZoneAt(cell);
@@ -215,11 +220,19 @@ namespace RimWorldMcp.Bridge.Game
 
             json.BeginObject();
             GameAccess.WriteCell(json, cell);
+            bool includeHidden = query.GetString("include_hidden") == "true";
+            if (includeHidden)
+            {
+                GameAccess.RequireHiddenInformation();
+            }
             if (cell.Fogged(map))
             {
                 json.Prop("fogged", true);
-                json.EndObject();
-                return;
+                if (!includeHidden)
+                {
+                    json.EndObject();
+                    return;
+                }
             }
 
             TerrainDef terrain = cell.GetTerrain(map);
@@ -241,7 +254,7 @@ namespace RimWorldMcp.Bridge.Game
             }
 
             json.Key("things").BeginArray();
-            foreach (Thing thing in map.thingGrid.ThingsListAtFast(cell).Where(GameAccess.IsVisible))
+            foreach (Thing thing in map.thingGrid.ThingsListAtFast(cell).Where(t => includeHidden || GameAccess.IsVisible(t)))
             {
                 json.BeginObject();
                 json.Prop("id", thing.ThingID);

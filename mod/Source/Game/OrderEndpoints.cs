@@ -247,7 +247,7 @@ namespace RimWorldMcp.Bridge.Game
             }
         }
 
-        private static Thing FindThing(string id)
+        internal static Thing FindThing(string id)
         {
             GameAccess.RequireGame();
             foreach (Map map in Find.Maps)

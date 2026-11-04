@@ -26,6 +26,35 @@ const presence = (what: string) =>
     .optional()
     .describe(`Whether the tile must have, or must not have, ${what}. Defaults to any.`);
 
+const pawnEditFields = {
+  first_name: z.string().optional(),
+  nickname: z.string().optional(),
+  last_name: z.string().optional(),
+  age: z.number().int().min(18).max(120).optional().describe("Biological age. Pawns under 18 cannot be set."),
+  childhood: z.string().optional().describe("BackstoryDef defName."),
+  adulthood: z.string().optional().describe("BackstoryDef defName. Needed for ages 20 and up."),
+  skills: z.string().optional().describe("Levels from 0 to 20, for example Shooting:12,Construction:8."),
+  passions: z.string().optional().describe("None, Minor or Major, for example Shooting:Major,Mining:None."),
+  add_traits: z.string().optional().describe("TraitDef defNames, with a level if it has several, for example Tough,Beauty:2."),
+  remove_traits: z.string().optional().describe("Comma-separated TraitDef defNames."),
+  clear_health: z.enum(["true"]).optional().describe("Removes all visible health conditions."),
+  clear_relations: z.enum(["true"]).optional().describe("Removes all their family and other relations, including relatives the player has not met yet."),
+  gender: z.enum(["Male", "Female"]).optional().describe("Also picks a new head and hair to suit."),
+  hair: z.string().optional().describe("HairDef defName."),
+  beard: z.string().optional().describe("BeardDef defName."),
+  favorite_color: z.string().optional().describe("ColorDef defName."),
+  xenotype: z.string().optional().describe("XenotypeDef defName. Needs Biotech. Replaces the pawn's genes."),
+  possessions: z.string().optional().describe("Items they bring, replacing the current list, for example MedicineIndustrial:5."),
+  hair_color: z.string().optional().describe("Red, green and blue from 0 to 255, such as 120,80,40."),
+  skin_color: z.string().optional().describe("Red, green and blue from 0 to 255, such as 230,190,160."),
+  head: z.string().optional().describe("HeadTypeDef defName."),
+  body: z.string().optional().describe("BodyTypeDef defName."),
+  clear_apparel: z.enum(["true"]).optional().describe("Removes everything they wear first."),
+  wear: z.string().optional().describe("Apparel ThingDef defNames, with a material if needed, for example Apparel_Parka:Cloth. Replaces anything it conflicts with."),
+  weapon: z.string().optional().describe("Weapon ThingDef defName, with a material if needed. Replaces the current one."),
+  add_implants: z.string().optional().describe("Comma-separated HediffDef defNames of surgical implants, such as BionicArm."),
+};
+
 export const tools: readonly ToolDefinition[] = [
   {
     name: "get_colony_overview",
@@ -221,6 +250,7 @@ export const tools: readonly ToolDefinition[] = [
         .describe("Parts separated by semicolons: a cell (10,20), a filled rectangle (10,20-15,25), or the edge of one (outline:10,20-15,25), which suits walls. For a building larger than one cell, each cell is where its center goes."),
       stuff: z.string().optional().describe("Material for a building made from one, as a ThingDef defName such as WoodLog, Steel or BlocksGranite. Defaults to the game's choice."),
       rotation: z.enum(["North", "East", "South", "West"]).optional().describe("For a building. Defaults to North."),
+      instant: z.enum(["true"]).optional().describe("A cheat, only when the player asks for it. Finishes it at once and free of cost, as the game's god mode does."),
     },
   },
   {
@@ -254,6 +284,178 @@ export const tools: readonly ToolDefinition[] = [
       plan: z.string().min(1).describe("A plan id from list_plans, or all."),
       map: mapParam,
     },
+  },
+  {
+    name: "set_game_speed",
+    title: "Game speed",
+    description:
+      "Only when the player asks, or while playing for them at their request. Pauses the game or sets its speed. While playing for the player, pause before anything risky and to think, since the game does not wait for you.",
+    path: "/v1/colony/speed",
+    acts: true,
+    inputSchema: {
+      speed: z.enum(["paused", "normal", "fast", "superfast"]),
+    },
+  },
+  {
+    name: "set_research",
+    title: "Set research",
+    description: "Only when the player asks. Chooses the research project, using a def from get_research, or none to stop.",
+    path: "/v1/colony/research",
+    acts: true,
+    inputSchema: {
+      project: z.string().min(1).describe("ResearchProjectDef defName, or none."),
+    },
+  },
+  {
+    name: "list_recipes",
+    title: "Recipes of a bench",
+    description: "What a work bench can make right now, including what mods add. Get bench ids from get_base.",
+    path: "/v1/colony/recipes",
+    inputSchema: {
+      thing: z.string().min(1).describe("Thing id of the bench."),
+    },
+  },
+  {
+    name: "add_bill",
+    title: "Add a bill",
+    description: "Only when the player asks. Adds a bill to a work bench. Its bills are listed by get_base.",
+    path: "/v1/colony/bills/add",
+    acts: true,
+    inputSchema: {
+      thing: z.string().min(1).describe("Thing id of the bench."),
+      recipe: z.string().min(1).describe("Recipe from list_recipes."),
+      repeat: z.enum(["count", "forever", "until"]).optional().describe("Make a number of times, forever, or until there are this many. Defaults to count."),
+      count: z.number().int().min(1).max(100000).optional().describe("Defaults to 1."),
+    },
+  },
+  {
+    name: "remove_bill",
+    title: "Remove a bill",
+    description: "Only when the player asks. Removes a bill from a work bench, by its position in the list from get_base, starting at 0.",
+    path: "/v1/colony/bills/remove",
+    acts: true,
+    inputSchema: {
+      thing: z.string().min(1).describe("Thing id of the bench."),
+      index: z.number().int().min(0),
+    },
+  },
+  {
+    name: "set_crop",
+    title: "Set a crop",
+    description: "Only when the player asks. Sets what a growing zone sows. An invalid plant lists the valid ones.",
+    path: "/v1/colony/crop",
+    acts: true,
+    inputSchema: {
+      x: z.number().int().min(0).describe("Any cell in the zone."),
+      z: z.number().int().min(0),
+      plant: z.string().min(1).describe("Plant ThingDef defName, such as Plant_Rice."),
+    },
+  },
+  {
+    name: "answer_dialog",
+    title: "Answer a dialog",
+    description:
+      "Only when the player asks. Chooses an option in the dialog on screen, as listed by get_player_focus. Many of these decide an event for good, so tell the player what you are choosing and why.",
+    path: "/v1/dialogs/answer",
+    acts: true,
+    inputSchema: {
+      choice: z.string().min(1).describe("The option's text, exactly as given."),
+    },
+  },
+  {
+    name: "list_letters",
+    title: "Letters",
+    description: "The letters on the right of the screen, with their text and choices.",
+    path: "/v1/letters",
+    inputSchema: {},
+  },
+  {
+    name: "answer_letter",
+    title: "Answer a letter",
+    description:
+      "Only when the player asks. Chooses an option in a letter from list_letters, such as accepting a quest. If dialog_still_open is true, it led to more choices, which answer_dialog can answer.",
+    path: "/v1/letters/answer",
+    acts: true,
+    inputSchema: {
+      letter: z.string().min(1).describe("Letter id."),
+      choice: z.string().min(1).describe("The choice's text, exactly as given."),
+    },
+  },
+  {
+    name: "spawn_thing",
+    title: "Spawn a thing",
+    description:
+      "A cheat, only when the player asks for it. Creates items, buildings or plants at a cell, out of nothing. Items are placed around the cell. A building replaces what is there, so check view_map first.",
+    path: "/v1/cheats/spawn-thing",
+    acts: true,
+    inputSchema: {
+      def: z.string().min(1).describe("ThingDef defName, such as WoodLog. Find names with search_defs."),
+      x: z.number().int().min(0),
+      z: z.number().int().min(0),
+      count: z.number().int().min(1).max(100000).optional().describe("Defaults to 1."),
+      stuff: z.string().optional().describe("Material, if it is made from one."),
+      quality: z.string().optional().describe("Awful, Poor, Normal, Good, Excellent, Masterwork or Legendary."),
+      map: mapParam,
+    },
+  },
+  {
+    name: "spawn_pawn",
+    title: "Spawn a pawn",
+    description:
+      "A cheat, only when the player asks for it. Creates pawns near a cell: people, animals or enemies, in any faction.",
+    path: "/v1/cheats/spawn-pawn",
+    acts: true,
+    inputSchema: {
+      kind: z.string().min(1).describe("PawnKindDef defName, such as Colonist or Muffalo. Find names with search_defs."),
+      x: z.number().int().min(0),
+      z: z.number().int().min(0),
+      faction: z.string().optional().describe("player, none, or a faction's name or defName. Defaults to none."),
+      count: z.number().int().min(1).max(100).optional().describe("Defaults to 1."),
+      map: mapParam,
+    },
+  },
+  {
+    name: "trigger_incident",
+    title: "Trigger an event",
+    description:
+      "A cheat, only when the player asks for it. Fires an event right now: a raid, a trader, an infestation, a cold snap and so on, including those from mods. fired false means the game could not fire it now.",
+    path: "/v1/cheats/incident",
+    acts: true,
+    inputSchema: {
+      incident: z.string().min(1).describe("IncidentDef defName. Find names with search_defs and type IncidentDef."),
+      points: z.number().int().min(1).optional().describe("Strength, such as the size of a raid. Defaults to the game's choice."),
+      map: mapParam,
+    },
+  },
+  {
+    name: "complete_research",
+    title: "Complete research",
+    description: "A cheat, only when the player asks for it. Finishes a research project, or all of them.",
+    path: "/v1/cheats/research",
+    acts: true,
+    inputSchema: {
+      project: z.string().min(1).describe("ResearchProjectDef defName, or all."),
+    },
+  },
+  {
+    name: "edit_pawn",
+    title: "Edit a pawn",
+    description:
+      "A cheat, only when the player asks for it. Directly sets a person's attributes during play and leaves the others alone: name, age, skills, passions, traits, backstory, looks, gear and health. Read the result with get_pawn.",
+    path: "/v1/cheats/edit-pawn",
+    acts: true,
+    inputSchema: {
+      pawn: z.string().min(1).describe("Pawn id from list_pawns, or the pawn's name."),
+      ...pawnEditFields,
+    },
+  },
+  {
+    name: "reveal_map",
+    title: "Reveal the map",
+    description: "A cheat that shows hidden information, only when the player asks for it. Removes all fog from a map for good.",
+    path: "/v1/cheats/reveal-map",
+    acts: true,
+    inputSchema: { map: mapParam },
   },
   {
     name: "get_threats",
@@ -321,6 +523,10 @@ export const tools: readonly ToolDefinition[] = [
       "Renders part of the map as text, with a legend, so you can reason about layout and positions without a screenshot. Defaults to the area around the player's camera.",
     path: "/v1/map/view",
     inputSchema: {
+      include_hidden: z
+        .enum(["true"])
+        .optional()
+        .describe("Also shows what is hidden from the player. Use only when the player asks what is hidden there, and never mention it otherwise."),
       x: z.number().int().optional().describe("West edge of the area."),
       z: z.number().int().optional().describe("South edge of the area."),
       width: z.number().int().min(1).max(120).optional().describe("Defaults to 60."),
@@ -335,6 +541,10 @@ export const tools: readonly ToolDefinition[] = [
       "Everything visible on one map cell: terrain, fertility, roof, temperature, room, zone and things.",
     path: "/v1/map/cell",
     inputSchema: {
+      include_hidden: z
+        .enum(["true"])
+        .optional()
+        .describe("Also shows what is hidden from the player. Use only when the player asks what is hidden there, and never mention it otherwise."),
       x: z.number().int().min(0),
       z: z.number().int().min(0),
       map: mapParam,
@@ -617,32 +827,7 @@ export const tools: readonly ToolDefinition[] = [
     acts: true,
     inputSchema: {
       index: z.number().int().min(0).describe("Colonist index from get_starting_pawns."),
-      first_name: z.string().optional(),
-      nickname: z.string().optional(),
-      last_name: z.string().optional(),
-      age: z.number().int().min(18).max(120).optional().describe("Biological age. Pawns under 18 cannot be set."),
-      childhood: z.string().optional().describe("BackstoryDef defName."),
-      adulthood: z.string().optional().describe("BackstoryDef defName. Needed for ages 20 and up."),
-      skills: z.string().optional().describe("Levels from 0 to 20, for example Shooting:12,Construction:8."),
-      passions: z.string().optional().describe("None, Minor or Major, for example Shooting:Major,Mining:None."),
-      add_traits: z.string().optional().describe("TraitDef defNames, with a level if it has several, for example Tough,Beauty:2."),
-      remove_traits: z.string().optional().describe("Comma-separated TraitDef defNames."),
-      clear_health: z.enum(["true"]).optional().describe("Removes all visible health conditions."),
-      clear_relations: z.enum(["true"]).optional().describe("Removes all their family and other relations, including relatives the player has not met yet."),
-      gender: z.enum(["Male", "Female"]).optional().describe("Also picks a new head and hair to suit."),
-      hair: z.string().optional().describe("HairDef defName."),
-      beard: z.string().optional().describe("BeardDef defName."),
-      favorite_color: z.string().optional().describe("ColorDef defName."),
-      xenotype: z.string().optional().describe("XenotypeDef defName. Needs Biotech. Replaces the pawn's genes."),
-      possessions: z.string().optional().describe("Items they bring, replacing the current list, for example MedicineIndustrial:5."),
-      hair_color: z.string().optional().describe("Red, green and blue from 0 to 255, such as 120,80,40."),
-      skin_color: z.string().optional().describe("Red, green and blue from 0 to 255, such as 230,190,160."),
-      head: z.string().optional().describe("HeadTypeDef defName."),
-      body: z.string().optional().describe("BodyTypeDef defName."),
-      clear_apparel: z.enum(["true"]).optional().describe("Removes everything they wear first."),
-      wear: z.string().optional().describe("Apparel ThingDef defNames, with a material if needed, for example Apparel_Parka:Cloth. Replaces anything it conflicts with."),
-      weapon: z.string().optional().describe("Weapon ThingDef defName, with a material if needed. Replaces the current one."),
-      add_implants: z.string().optional().describe("Comma-separated HediffDef defNames of surgical implants, such as BionicArm."),
+      ...pawnEditFields,
     },
   },
   {

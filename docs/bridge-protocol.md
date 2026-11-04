@@ -81,6 +81,21 @@ Failure looks like this:
 | `/v1/plans` | `map` | `list_plans` |
 | `POST /v1/plans/draw` | `cells`, `color`, `label`, `map` | `draw_plan` |
 | `POST /v1/plans/remove` | `plan`, `map` | `remove_plan` |
+| `POST /v1/colony/speed` | `speed` | `set_game_speed` |
+| `POST /v1/colony/research` | `project` | `set_research` |
+| `/v1/colony/recipes` | `thing` | `list_recipes` |
+| `POST /v1/colony/bills/add` | `thing`, `recipe`, `repeat`, `count` | `add_bill` |
+| `POST /v1/colony/bills/remove` | `thing`, `index` | `remove_bill` |
+| `POST /v1/colony/crop` | `x`, `z`, `plant` | `set_crop` |
+| `POST /v1/dialogs/answer` | `choice` | `answer_dialog` |
+| `/v1/letters` | | `list_letters` |
+| `POST /v1/letters/answer` | `letter`, `choice` | `answer_letter` |
+| `POST /v1/cheats/spawn-thing` | See `docs/tools.md` | `spawn_thing` |
+| `POST /v1/cheats/spawn-pawn` | See `docs/tools.md` | `spawn_pawn` |
+| `POST /v1/cheats/incident` | `incident`, `points`, `map` | `trigger_incident` |
+| `POST /v1/cheats/research` | `project` | `complete_research` |
+| `POST /v1/cheats/edit-pawn` | See `docs/tools.md` | `edit_pawn` |
+| `POST /v1/cheats/reveal-map` | `map` | `reveal_map` |
 | `/v1/threats` | `map` | `get_threats` |
 | `/v1/resources` | `map` | `get_resources` |
 | `/v1/base` | `sections`, `map` | `get_base` |
