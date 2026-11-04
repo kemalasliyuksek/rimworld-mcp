@@ -411,12 +411,18 @@ namespace RimWorldMcp.Bridge.Game
             {
                 throw new BadRequestException("That caravan cannot reach that tile.");
             }
-            bool started = caravan.pather.StartPath(tile, null, repathImmediately: true);
+
+            // Without this, a caravan sent home would stop on the world map instead of walking in.
+            MapParent destination = Find.WorldObjects.MapParentAt(tile);
+            bool entering = destination != null && destination.HasMap && destination.Faction == Faction.OfPlayer;
+            CaravanArrivalAction arrival = entering ? new CaravanArrivalAction_Enter(destination) : null;
+            bool started = caravan.pather.StartPath(tile, arrival, repathImmediately: true);
 
             json.BeginObject();
             json.Prop("caravan", name);
             json.Prop("moving", started);
             json.Prop("tile", tile.tileId);
+            json.Prop("will_enter_map", entering);
             json.EndObject();
         }
     }

@@ -196,6 +196,10 @@ export const tools: readonly ToolDefinition[] = [
     path: "/v1/orders/give",
     acts: true,
     inputSchema: {
+      confirm: z
+        .enum(["true"])
+        .optional()
+        .describe("Answers yes if the game asks to confirm. Without it, needs_confirmation gives the question. Tell the player the question, and pass this only once they agree."),
       pawns: z.string().min(1).describe("Comma-separated pawn ids or names."),
       x: z.number().int().min(0),
       z: z.number().int().min(0),
@@ -220,6 +224,10 @@ export const tools: readonly ToolDefinition[] = [
     path: "/v1/gizmos/use",
     acts: true,
     inputSchema: {
+      confirm: z
+        .enum(["true"])
+        .optional()
+        .describe("Answers yes if the game asks to confirm. Without it, needs_confirmation gives the question. Tell the player the question, and pass this only once they agree."),
       thing: z.string().min(1).describe("Thing id, or a pawn's name."),
       button: z.string().min(1).describe("The button's text, exactly as list_gizmos gives it."),
       x: z.number().int().min(0).optional(),
@@ -245,6 +253,10 @@ export const tools: readonly ToolDefinition[] = [
     path: "/v1/designators/use",
     acts: true,
     inputSchema: {
+      confirm: z
+        .enum(["true"])
+        .optional()
+        .describe("Answers yes if the game asks to confirm. Without it, needs_confirmation gives the question. Tell the player the question, and pass this only once they agree."),
       designator: z.string().min(1).describe("An id from list_designators."),
       cells: z
         .string()
@@ -465,7 +477,7 @@ export const tools: readonly ToolDefinition[] = [
   {
     name: "send_caravan",
     title: "Send a caravan",
-    description: "Only when the player asks. Sends a caravan to a world tile. Caravans are listed by get_world, and search_sites and get_site find tiles.",
+    description: "Only when the player asks. Sends a caravan to a world tile. Sent to a tile with one of the player's maps, such as home, it walks back in. Caravans are listed by get_world, and search_sites and get_site find tiles.",
     path: "/v1/caravans/send",
     acts: true,
     inputSchema: {

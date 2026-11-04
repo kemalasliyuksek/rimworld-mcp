@@ -231,7 +231,7 @@ namespace RimWorldMcp.Bridge.Game
                             throw new BadRequestException("The game does not allow this order right now.");
                         }
                         option.Chosen(colonistOrdering: false, floatMenu: null);
-                    }));
+                    }, query.GetString("confirm") == "true"));
                 });
             }
             json.EndArray();
@@ -240,10 +240,14 @@ namespace RimWorldMcp.Bridge.Game
 
         private static void WriteOutcome(JsonWriter json, PlayerInputGuard.Outcome outcome)
         {
-            json.Prop("done", outcome.NeedsPlayer == null);
+            json.Prop("done", outcome.NeedsPlayer == null && outcome.NeedsConfirmation == null);
             if (outcome.NeedsPlayer != null)
             {
                 json.Prop("needs_player", outcome.NeedsPlayer);
+            }
+            if (outcome.NeedsConfirmation != null)
+            {
+                json.Prop("needs_confirmation", outcome.NeedsConfirmation);
             }
         }
 
@@ -369,7 +373,7 @@ namespace RimWorldMcp.Bridge.Game
                     default:
                         throw new BadRequestException("That button only works by hand, so the player has to press it.");
                 }
-            });
+            }, query.GetString("confirm") == "true");
 
             json.BeginObject();
             json.Prop("thing", GameAccess.Clean(thing.LabelShort));

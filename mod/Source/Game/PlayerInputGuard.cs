@@ -22,9 +22,12 @@ namespace RimWorldMcp.Bridge.Game
         {
             /// <summary>Why the step needs the player, or null if it ran to the end.</summary>
             public string NeedsPlayer;
+
+            /// <summary>The game's question, if it asked one and no answer was given in advance.</summary>
+            public string NeedsConfirmation;
         }
 
-        public static Outcome Run(Thing actingFor, Action action)
+        public static Outcome Run(Thing actingFor, Action action, bool confirm = false)
         {
             List<object> selection = Find.Selector.SelectedObjects.ToList();
             ReplaceSelection(actingFor != null ? new List<object> { actingFor } : new List<object>());
@@ -36,6 +39,21 @@ namespace RimWorldMcp.Bridge.Game
             try
             {
                 action();
+
+                // A yes-or-no question is the one window worth answering here, when the player has said yes.
+                foreach (Dialog_MessageBox box in Find.WindowStack.Windows.OfType<Dialog_MessageBox>().Where(w => !windows.Contains(w)).ToList())
+                {
+                    if (confirm)
+                    {
+                        Find.WindowStack.TryRemove(box, doCloseSound: false);
+                        box.buttonAAction?.Invoke();
+                    }
+                    else
+                    {
+                        Find.WindowStack.TryRemove(box, doCloseSound: false);
+                        outcome.NeedsConfirmation = GameAccess.Clean(box.text);
+                    }
+                }
             }
             finally
             {

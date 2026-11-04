@@ -181,7 +181,7 @@ namespace RimWorldMcp.Bridge.Game
             PlayerInputGuard.Outcome outcome;
             try
             {
-                outcome = PlayerInputGuard.Run(null, () => done = ApplyDesignator(designator, cells, map, rejections));
+                outcome = PlayerInputGuard.Run(null, () => done = ApplyDesignator(designator, cells, map, rejections), query.GetString("confirm") == "true");
             }
             finally
             {
@@ -205,6 +205,10 @@ namespace RimWorldMcp.Bridge.Game
             if (outcome.NeedsPlayer != null)
             {
                 json.Prop("needs_player", outcome.NeedsPlayer);
+            }
+            if (outcome.NeedsConfirmation != null)
+            {
+                json.Prop("needs_confirmation", outcome.NeedsConfirmation);
             }
             json.EndObject();
         }
