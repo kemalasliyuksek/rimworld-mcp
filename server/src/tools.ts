@@ -213,7 +213,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "search_sites",
     title: "Find places to settle",
     description:
-      'Searches the whole world for tiles that match what the player asks for, whatever that is, and works before a game starts. Every condition is optional. With shape "crescent" it predicts each tile\'s mountains from the world seed and ranks tiles by how well rock wraps around open ground with a single way in. min_rock_pct and max_rock_pct filter by how much of the map is predicted to be rock. Cave tunnels contain insect hives, which is worth mentioning when a player asks for caves. A search has a time limit and checks a random sample on large planets, so whole_world_checked may be false. Narrowing by biome, hilliness or features lets it reach more of the matching tiles, and running it again does not change the result. Do not suggest generating another world unless this finds nothing good.',
+      'Searches the whole world for tiles that match what the player asks for, whatever that is, and works before a game starts. Every condition is optional. With shape "crescent" it predicts each tile\'s mountains from the world seed and ranks tiles by how well rock wraps around open ground with a single way in. min_rock_pct and max_rock_pct filter by how much of the map is predicted to be rock. Cave tunnels contain insect hives, which is worth mentioning when a player asks for caves. A search has a time limit and checks a random sample on large planets, so whole_world_checked may be false. Narrowing by biome, hilliness or features lets it reach more of the matching tiles, and next_offset continues with tiles it has not checked yet. Look at the preview from get_site before recommending a site. Do not suggest generating another world unless this finds nothing good.',
     path: "/v1/sites/search",
     inputSchema: {
       biomes: z.string().optional().describe("Comma-separated biome defNames."),
@@ -233,6 +233,7 @@ export const tools: readonly ToolDefinition[] = [
       min_rainfall: z.number().int().min(0).optional().describe("Yearly rainfall in mm."),
       max_rainfall: z.number().int().min(0).optional().describe("Yearly rainfall in mm."),
       max_diseases_per_year: z.number().int().min(0).optional(),
+      max_pollution_pct: z.number().int().min(0).max(100).optional(),
       caves: presence("cave tunnels, which contain insect hives"),
       coast: presence("an ocean coast"),
       lake: presence("a lake shore"),
@@ -251,6 +252,12 @@ export const tools: readonly ToolDefinition[] = [
       max_rock_pct: z.number().int().min(0).max(100).optional().describe("Predicted share of the map that is rock."),
       min_pocket_score: z.number().int().min(0).max(100).optional(),
       limit: z.number().int().min(1).max(20).optional().describe("Defaults to 8."),
+      offset: z
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .describe("Continue a search from the next_offset of an earlier result, with the same filters."),
     },
   },
   {
@@ -267,7 +274,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "show_site",
     title: "Show site in game",
     description:
-      "On the site selection screen, moves the player's camera to a tile and selects it, so they can see it without hunting for it on the globe. It changes nothing else, and the player still confirms the choice themselves. Call it for the site you recommend.",
+      "On the site selection screen, moves the player's camera to a tile and selects it, so they can see it without hunting for it on the globe. It also zooms in if the camera is far away. It changes nothing else, and the player still confirms the choice themselves. Call it for the site you recommend.",
     path: "/v1/sites/show",
     changesUiState: true,
     inputSchema: {

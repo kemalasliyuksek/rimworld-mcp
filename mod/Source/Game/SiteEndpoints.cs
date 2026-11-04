@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using RimWorld;
 using RimWorld.Planet;
@@ -17,9 +18,14 @@ namespace RimWorldMcp.Bridge.Game
     /// </summary>
     internal static class SiteEndpoints
     {
-        private const int SearchCellsPerSample = 4;
+        // Search and details use the same resolution so that a tile keeps the same score in both.
+        private const int CellsPerSample = 5;
 
-        private const int PreviewCellsPerSample = 5;
+        // Close enough for one tile to stand out on a planet at full coverage.
+        private const float SiteViewAltitude = 180f;
+
+        private static readonly FieldInfo DesiredAltitudeField =
+            typeof(WorldCameraDriver).GetField("desiredAltitude", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private const int DaysPerTwelfth = 5;
 
@@ -103,6 +109,7 @@ namespace RimWorldMcp.Bridge.Game
             int minScore = query.GetInt("min_pocket_score", 0, 0, 100);
             int minRock = query.GetInt("min_rock_pct", 0, 0, 100);
             int maxRock = query.GetInt("max_rock_pct", 100, 0, 100);
+            int offset = query.GetInt("offset", 0, 0, int.MaxValue);
             bool needsPrediction = rankByPocket || minRock > 0 || maxRock < 100;
 
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -115,7 +122,7 @@ namespace RimWorldMcp.Bridge.Game
             int mapSize = MapSize();
             var found = new List<SiteResult>();
             int visited = 0;
-            foreach (SurfaceTile tile in candidates)
+            foreach (SurfaceTile tile in candidates.Skip(offset))
             {
                 if (stopwatch.ElapsedMilliseconds > SearchBudgetMs || (!needsPrediction && visited >= MaxCheckedWithoutPrediction))
                 {
@@ -130,8 +137,8 @@ namespace RimWorldMcp.Bridge.Game
                 var result = new SiteResult { Tile = tile, GrowingDays = GrowingDays(tile) };
                 if (needsPrediction)
                 {
-                    result.Prediction = MountainPredictor.Predict(tile, mapSize, SearchCellsPerSample);
-                    result.Pocket = PocketAnalyzer.Analyze(result.Prediction.Rock, SearchCellsPerSample);
+                    result.Prediction = MountainPredictor.Predict(tile, mapSize, CellsPerSample);
+                    result.Pocket = PocketAnalyzer.Analyze(result.Prediction.Rock, CellsPerSample);
                     if (result.Pocket.Score < minScore || result.Pocket.RockPercent < minRock || result.Pocket.RockPercent > maxRock)
                     {
                         continue;
@@ -147,7 +154,12 @@ namespace RimWorldMcp.Bridge.Game
             json.BeginObject();
             json.Prop("candidates", candidates.Count);
             json.Prop("checked", visited);
-            json.Prop("whole_world_checked", visited == candidates.Count);
+            bool finished = offset + visited >= candidates.Count;
+            json.Prop("whole_world_checked", offset == 0 && finished);
+            if (!finished)
+            {
+                json.Prop("next_offset", offset + visited);
+            }
             json.Prop("found", found.Count);
             json.Prop("sorted_by", rankByPocket ? "pocket score" : "growing days, then mildest climate");
             json.Key("sites").BeginArray();
@@ -221,8 +233,8 @@ namespace RimWorldMcp.Bridge.Game
             RequireWorld();
             SurfaceTile tile = ResolveTile(query);
             int mapSize = MapSize();
-            MountainPredictor.Prediction prediction = MountainPredictor.Predict(tile, mapSize, PreviewCellsPerSample);
-            PocketResult pocket = PocketAnalyzer.Analyze(prediction.Rock, PreviewCellsPerSample);
+            MountainPredictor.Prediction prediction = MountainPredictor.Predict(tile, mapSize, CellsPerSample);
+            PocketResult pocket = PocketAnalyzer.Analyze(prediction.Rock, CellsPerSample);
 
             json.BeginObject();
             WriteSiteFields(json, tile, (tile, prediction, pocket), detailed: true);
@@ -268,14 +280,23 @@ namespace RimWorldMcp.Bridge.Game
                 throw new BadRequestException("Nobody can settle on that tile.");
             }
 
+            // The order matters: jumping to a tile sets the selected planet layer, and that clears the
+            // selected tile.
+            Find.WorldCameraDriver.JumpTo(tile.tile);
             Find.WorldSelector.ClearSelection();
             Find.WorldInterface.SelectedTile = tile.tile;
-            Find.WorldCameraDriver.JumpTo(tile.tile);
+
+            WorldCameraDriver camera = Find.WorldCameraDriver;
+            if (camera.altitude > SiteViewAltitude)
+            {
+                camera.altitude = SiteViewAltitude;
+                DesiredAltitudeField?.SetValue(camera, SiteViewAltitude);
+            }
 
             json.BeginObject();
             json.Prop("tile", tile.tile.tileId);
             json.Prop("biome", tile.PrimaryBiome.label);
-            json.Prop("shown", true);
+            json.Prop("selected", Find.WorldInterface.SelectedTile == tile.tile);
             json.EndObject();
         }
 
@@ -307,6 +328,7 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("rainfall_mm", tile.rainfall);
             json.Prop("growing_days_per_60", GrowingDays(tile));
             json.Prop("diseases_per_year", 60f / tile.PrimaryBiome.diseaseMtbDays);
+            json.Prop("pollution_pct", GameAccess.Percent(tile.pollution));
 
             WriteLabels(json, "features", tile.Mutators.OrderBy(m => -m.displayPriority).Select(m => GameAccess.Clean(m.Label(id))));
             WriteLabels(json, "stones", Find.World.NaturalRockTypesIn(id).Select(r => r.label));
@@ -345,7 +367,6 @@ namespace RimWorldMcp.Bridge.Game
             {
                 json.Prop("elevation_m", tile.elevation);
                 json.Prop("swampiness", tile.swampiness);
-                json.Prop("pollution_pct", GameAccess.Percent(tile.pollution));
                 json.Prop("forageability_pct", GameAccess.Percent(tile.PrimaryBiome.forageability));
                 json.Prop("animal_density", tile.AnimalDensity);
                 json.Prop("region", tile.feature?.name);
@@ -394,10 +415,10 @@ namespace RimWorldMcp.Bridge.Game
         private static void WritePreview(JsonWriter json, bool[,] rock, PocketResult pocket)
         {
             int samples = rock.GetLength(0);
-            int centerX = pocket.Score > 0 ? pocket.CenterX / PreviewCellsPerSample : -1;
-            int centerZ = pocket.Score > 0 ? pocket.CenterZ / PreviewCellsPerSample : -1;
+            int centerX = pocket.Score > 0 ? pocket.CenterX / CellsPerSample : -1;
+            int centerZ = pocket.Score > 0 ? pocket.CenterZ / CellsPerSample : -1;
 
-            json.Prop("preview_note", $"Predicted rock. # is rock, . is open ground, X is the pocket centre. The first row is north, and each character is {PreviewCellsPerSample} cells. Water, caves, ores and ruins are not shown.");
+            json.Prop("preview_note", $"Predicted rock. # is rock, . is open ground, X is the pocket centre. The first row is north, and each character is {CellsPerSample} cells. Water, caves, ores and ruins are not shown.");
             json.Key("preview").BeginArray();
             var row = new StringBuilder(samples);
             for (int z = samples - 1; z >= 0; z--)
@@ -434,6 +455,7 @@ namespace RimWorldMcp.Bridge.Game
             private readonly float maxHottest;
             private readonly float maxDiseases;
             private readonly int minGrowingDays;
+            private readonly float maxPollution;
             private readonly Presence caves;
             private readonly Presence coast;
             private readonly Presence lake;
@@ -452,6 +474,7 @@ namespace RimWorldMcp.Bridge.Game
                 maxHottest = query.GetInt("max_hottest_c", -NoTemperatureLimit, NoTemperatureLimit, -NoTemperatureLimit);
                 maxDiseases = query.GetInt("max_diseases_per_year", int.MaxValue, 0, int.MaxValue);
                 minGrowingDays = query.GetInt("min_growing_days", 0, 0, 60);
+                maxPollution = query.GetInt("max_pollution_pct", 100, 0, 100) / 100f;
                 caves = ReadPresence(query, "caves");
                 coast = ReadPresence(query, "coast");
                 lake = ReadPresence(query, "lake");
@@ -507,7 +530,7 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     return false;
                 }
-                if (60f / biome.diseaseMtbDays > maxDiseases)
+                if (60f / biome.diseaseMtbDays > maxDiseases || tile.pollution > maxPollution)
                 {
                     return false;
                 }

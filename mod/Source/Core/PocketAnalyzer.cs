@@ -46,6 +46,11 @@ namespace RimWorldMcp.Bridge.Core
         private const double MinClearRadius = 10;
         private const double FullRoomRadius = 22;
         private const double MapEdgeMargin = 25;
+        private const double MinWallMassCells = 800;
+
+        // Rock this close together counts as one wall: a short gap can be closed with a door, while
+        // separate hills that merely stand around a spot cannot be defended as one wall.
+        private const double MaxGapWithinWall = 10;
 
         private static readonly string[] CompassNames = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" };
 
@@ -58,6 +63,7 @@ namespace RimWorldMcp.Bridge.Core
             double rockPercent = CountRockPercent(rock);
             var best = new PocketResult { RockPercent = rockPercent };
 
+            int[,] masses = LabelRockMasses(rock, cellsPerSample, out int[] massCells);
             int margin = (int)Math.Ceiling(MapEdgeMargin / cellsPerSample);
             int centerStep = Math.Max(1, 8 / cellsPerSample);
             for (int x = margin; x < width - margin; x += centerStep)
@@ -68,7 +74,7 @@ namespace RimWorldMcp.Bridge.Core
                     {
                         continue;
                     }
-                    PocketResult candidate = Evaluate(rock, x, z, cellsPerSample, rockPercent);
+                    PocketResult candidate = Evaluate(rock, masses, massCells, x, z, cellsPerSample, rockPercent);
                     if (candidate != null && candidate.Score > best.Score)
                     {
                         best = candidate;
@@ -78,29 +84,45 @@ namespace RimWorldMcp.Bridge.Core
             return best;
         }
 
-        private static PocketResult Evaluate(bool[,] rock, int centerX, int centerZ, int cellsPerSample, double rockPercent)
+        private static PocketResult Evaluate(bool[,] rock, int[,] masses, int[] massCells, int centerX, int centerZ, int cellsPerSample, double rockPercent)
         {
-            var walled = new bool[RayCount];
+            var hitMass = new int[RayCount];
+            var raysPerMass = new int[massCells.Length];
             double clearRadius = MaxWallDistance;
-            int walledCount = 0;
 
             for (int i = 0; i < RayCount; i++)
             {
                 double angle = 2 * Math.PI * i / RayCount;
-                double distance = WallDistance(rock, centerX, centerZ, angle, cellsPerSample);
+                double distance = WallDistance(rock, masses, centerX, centerZ, angle, cellsPerSample, out hitMass[i]);
                 if (distance < 0)
                 {
                     continue;
                 }
-                walled[i] = true;
-                walledCount++;
+                raysPerMass[hitMass[i]]++;
                 clearRadius = Math.Min(clearRadius, distance);
             }
 
-            if (walledCount == 0 || clearRadius < MinClearRadius)
+            // A crescent is a single mass of rock, so only the one that wraps around the spot the most
+            // counts as the wall. Other hills in the way are obstacles and not protection.
+            int wall = -1;
+            for (int mass = 0; mass < raysPerMass.Length; mass++)
+            {
+                if (massCells[mass] >= MinWallMassCells && raysPerMass[mass] > 0 && (wall < 0 || raysPerMass[mass] > raysPerMass[wall]))
+                {
+                    wall = mass;
+                }
+            }
+            if (wall < 0 || clearRadius < MinClearRadius)
             {
                 return null;
             }
+
+            var walled = new bool[RayCount];
+            for (int i = 0; i < RayCount; i++)
+            {
+                walled[i] = hitMass[i] == wall;
+            }
+            int walledCount = raysPerMass[wall];
 
             FindOpenings(walled, out int openings, out int widestStart, out int widestLength);
             int openRays = RayCount - walledCount;
@@ -126,8 +148,9 @@ namespace RimWorldMcp.Bridge.Core
         }
 
         /// <returns>Distance to a wall thick enough to count as solid, or -1 if there is none.</returns>
-        private static double WallDistance(bool[,] rock, int centerX, int centerZ, double angle, int cellsPerSample)
+        private static double WallDistance(bool[,] rock, int[,] masses, int centerX, int centerZ, double angle, int cellsPerSample, out int hitMass)
         {
+            hitMass = -1;
             int width = rock.GetLength(0);
             int height = rock.GetLength(1);
             double stepX = Math.Cos(angle);
@@ -144,7 +167,7 @@ namespace RimWorldMcp.Bridge.Core
                 if (x < 0 || z < 0 || x >= width || z >= height)
                 {
                     // Enemies arrive from the map edge, so a wall that runs out here protects nothing.
-                    return thickness >= requiredThickness ? firstHit : -1;
+                    return -1;
                 }
 
                 if (rock[x, z])
@@ -160,6 +183,7 @@ namespace RimWorldMcp.Bridge.Core
                     thickness++;
                     if (thickness >= requiredThickness)
                     {
+                        hitMass = masses[x, z];
                         return firstHit;
                     }
                 }
@@ -170,6 +194,61 @@ namespace RimWorldMcp.Bridge.Core
                 }
             }
             return -1;
+        }
+
+        /// <summary>Groups rock samples into masses, treating short gaps as part of the same mass.</summary>
+        private static int[,] LabelRockMasses(bool[,] rock, int cellsPerSample, out int[] massCells)
+        {
+            int width = rock.GetLength(0);
+            int height = rock.GetLength(1);
+            int reach = Math.Max(1, (int)Math.Ceiling(MaxGapWithinWall / cellsPerSample));
+            var labels = new int[width, height];
+            var sizes = new System.Collections.Generic.List<int>();
+            var pending = new System.Collections.Generic.Stack<(int X, int Z)>();
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int z = 0; z < height; z++)
+                {
+                    labels[x, z] = -1;
+                }
+            }
+
+            for (int startX = 0; startX < width; startX++)
+            {
+                for (int startZ = 0; startZ < height; startZ++)
+                {
+                    if (!rock[startX, startZ] || labels[startX, startZ] >= 0)
+                    {
+                        continue;
+                    }
+
+                    int label = sizes.Count;
+                    int samples = 0;
+                    labels[startX, startZ] = label;
+                    pending.Push((startX, startZ));
+                    while (pending.Count > 0)
+                    {
+                        (int x, int z) = pending.Pop();
+                        samples++;
+                        for (int nextX = Math.Max(0, x - reach); nextX <= Math.Min(width - 1, x + reach); nextX++)
+                        {
+                            for (int nextZ = Math.Max(0, z - reach); nextZ <= Math.Min(height - 1, z + reach); nextZ++)
+                            {
+                                if (rock[nextX, nextZ] && labels[nextX, nextZ] < 0)
+                                {
+                                    labels[nextX, nextZ] = label;
+                                    pending.Push((nextX, nextZ));
+                                }
+                            }
+                        }
+                    }
+                    sizes.Add(samples * cellsPerSample * cellsPerSample);
+                }
+            }
+
+            massCells = sizes.ToArray();
+            return labels;
         }
 
         private static void FindOpenings(bool[] walled, out int openings, out int widestStart, out int widestLength)

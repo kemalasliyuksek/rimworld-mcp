@@ -115,6 +115,54 @@ namespace RimWorldMcp.Bridge.Tests
         }
 
         [Fact]
+        public void SeparateHillsAroundASpotAreNotACrescent()
+        {
+            // Rocks stand in most directions, as in a real map that once fooled the score, but they
+            // are far apart. Enemies can walk between any of them.
+            bool[,] hills = Draw((x, z) =>
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    double angle = (60 * i + 30) * Math.PI / 180;
+                    double hillX = 125 + 42 * Math.Cos(angle);
+                    double hillZ = 125 + 42 * Math.Sin(angle);
+                    if (Math.Sqrt(Math.Pow(x - hillX, 2) + Math.Pow(z - hillZ, 2)) < 12)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+            double score = PocketAnalyzer.Analyze(hills, Step).Score;
+
+            Assert.True(score < 20, $"Score was {score}");
+        }
+
+        [Fact]
+        public void AShortGapDoesNotSplitAWall()
+        {
+            // A wall with a narrow break is still one wall, because a door can close it.
+            bool[,] broken = Draw((x, z) =>
+            {
+                bool inGap = Math.Abs(z - 125) < 4 && x < 125;
+                return Crescent(0, 90)[x / Step, z / Step] && !inGap;
+            });
+
+            double score = PocketAnalyzer.Analyze(broken, Step).Score;
+
+            Assert.True(score >= 40, $"Score was {score}");
+        }
+
+        [Fact]
+        public void TinyRockPatchesCannotBeTheWall()
+        {
+            bool[,] patch = Draw((x, z) => x >= 150 && x < 162 && z >= 120 && z < 132);
+
+            Assert.Equal(0, PocketAnalyzer.Analyze(patch, Step).Score);
+        }
+
+        [Fact]
         public void AClosedRingScoresLowerThanACrescent()
         {
             double closed = PocketAnalyzer.Analyze(Crescent(0, 0), Step).Score;

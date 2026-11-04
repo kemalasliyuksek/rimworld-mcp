@@ -75,11 +75,15 @@ same noise modules with the same random sequence as `GenStep_ElevationFertility`
 `TileMutatorWorker_Mountain`, then samples the result at a low resolution without creating a map.
 
 Other tile features can also shape the terrain, such as valleys, cliffs and rivers. They are not
-modeled, and results for those tiles report `prediction_exact: false` and name the features.
+modeled, and results for those tiles report `prediction_exact: false` and name the features. A feature
+counts as shaping the terrain when its worker overrides the terrain generation steps, so this also
+works for features added by mods.
 
-`PocketAnalyzer` then looks for a crescent. From each open spot it casts rays and asks which directions
-hit a wall of solid rock, then scores the spot highly when rock covers most directions, the gaps form
-one opening, and there is room to build. Spots near the map edge are skipped, and a wall that runs off
+`PocketAnalyzer` then looks for a crescent. It first groups rock into connected masses, treating short
+gaps as part of the same mass. From each open spot it casts rays and asks which directions hit the mass
+that wraps around the spot the most, then scores the spot highly when that one mass covers most
+directions, the gaps form one opening, and there is room to build. Separate hills do not add up to a
+wall, however many of them stand around a spot. Spots near the map edge are skipped, and a wall that runs off
 the edge of the map does not count, because enemies arrive from there.
 
 A search runs on the main thread, and a planet at full coverage has hundreds of thousands of land

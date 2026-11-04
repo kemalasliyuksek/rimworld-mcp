@@ -26,6 +26,8 @@ namespace RimWorldMcp.Bridge.Game
         private static readonly FloatRange PreTurbulenceStretchRange = ReadPrivate<FloatRange>("PreTurbulenceStretchRange");
         private static readonly FloatRange PostTurbulenceStretchRange = ReadPrivate<FloatRange>("PostTurbulenceStretchRange");
 
+        private static readonly Dictionary<TileMutatorDef, bool> TerrainShaping = new Dictionary<TileMutatorDef, bool>();
+
         private static readonly int ElevationSeedPart = new GenStep_ElevationFertility().SeedPart;
         private static readonly int MutatorSeedPart = new GenStep_MutatorPostElevationFertility().SeedPart;
 
@@ -59,7 +61,7 @@ namespace RimWorldMcp.Bridge.Game
 
             IList<TileMutatorDef> mutators = tile.Mutators;
             var unmodeled = mutators
-                .Where(m => !(m.Worker is TileMutatorWorker_Mountain))
+                .Where(m => !(m.Worker is TileMutatorWorker_Mountain) && ShapesTerrain(m))
                 .Select(m => m.defName)
                 .ToList();
 
@@ -92,6 +94,24 @@ namespace RimWorldMcp.Bridge.Game
             }
 
             return new Prediction { Rock = rock, Unmodeled = unmodeled };
+        }
+
+        // Most features only add plants, animals or the like. A feature's worker has to override one of
+        // these steps to reshape the land, which also tells the two apart for features added by mods.
+        private static bool ShapesTerrain(TileMutatorDef mutator)
+        {
+            if (mutator.Worker == null)
+            {
+                return false;
+            }
+            if (!TerrainShaping.TryGetValue(mutator, out bool shapes))
+            {
+                Type worker = mutator.Worker.GetType();
+                shapes = worker.GetMethod(nameof(TileMutatorWorker.GeneratePostElevationFertility)).DeclaringType != typeof(TileMutatorWorker)
+                    || worker.GetMethod(nameof(TileMutatorWorker.GeneratePostTerrain)).DeclaringType != typeof(TileMutatorWorker);
+                TerrainShaping[mutator] = shapes;
+            }
+            return shapes;
         }
 
         private static ModuleBase BuildElevation(SurfaceTile tile, int seed)

@@ -52,9 +52,9 @@ These work before a game starts, once a world has been generated.
 | Tool | Purpose |
 | --- | --- |
 | `get_world_settings` | Seed, world settings, the selected tile, and how many tiles have each biome, hilliness and feature. |
-| `search_sites` (`biomes`, `hilliness`, `min_growing_days`, `min_coldest_c`, `max_hottest_c`, `min_rainfall`, `max_rainfall`, `max_diseases_per_year`, `caves`, `coast`, `lake`, `river`, `road`, `exclude_features`, `require_features`, `shape`, `min_pocket_score`, `min_rock_pct`, `max_rock_pct`, `limit`) | Finds tiles that match, optionally ranked by predicted mountain shape. Every condition is optional. |
+| `search_sites` (`biomes`, `hilliness`, `min_growing_days`, `min_coldest_c`, `max_hottest_c`, `min_rainfall`, `max_rainfall`, `max_diseases_per_year`, `max_pollution_pct`, `caves`, `coast`, `lake`, `river`, `road`, `exclude_features`, `require_features`, `shape`, `min_pocket_score`, `min_rock_pct`, `max_rock_pct`, `limit`, `offset`) | Finds tiles that match, optionally ranked by predicted mountain shape. Every condition is optional. |
 | `get_site` (`tile`) | Full details of a tile, with a text preview of its predicted mountains. |
-| `show_site` (`tile`) | Moves the camera to a tile and selects it. |
+| `show_site` (`tile`) | Moves the camera to a tile, zooms in and selects it. |
 
 Searches follow what the player asks for. For example, a sheltered, mild, all-year site with no hives:
 
