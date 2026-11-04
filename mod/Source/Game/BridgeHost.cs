@@ -74,6 +74,7 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/sites/search", SiteEndpoints.Search);
             Register(endpoints, "/v1/sites/get", SiteEndpoints.Get);
             Register(endpoints, "/v1/sites/show", SiteEndpoints.Show, "POST");
+            Register(endpoints, "/v1/sites/options", SiteEndpoints.SetOptions, "POST");
             Register(endpoints, "/v1/ideo/options", IdeoEndpoints.Options);
             Register(endpoints, "/v1/ideo/setup", IdeoEndpoints.Setup);
             Register(endpoints, "/v1/ideo/configure", IdeoEndpoints.Configure, "POST");

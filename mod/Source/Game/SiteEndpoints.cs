@@ -21,6 +21,8 @@ namespace RimWorldMcp.Bridge.Game
         // Search and details use the same resolution so that a tile keeps the same score in both.
         private const int CellsPerSample = 5;
 
+        private const int MaxNearbySettlements = 5;
+
         // Close enough for one tile to stand out on a planet at full coverage.
         private const float SiteViewAltitude = 180f;
 
@@ -73,6 +75,7 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("overall_temperature", info.overallTemperature.ToString());
             json.Prop("overall_population", info.overallPopulation.ToString());
             json.Prop("map_size", MapSize());
+            json.Prop("starting_season", Find.GameInitData?.startingSeason.ToString());
             json.Prop("land_tiles", land.Count);
             json.Prop("on_site_selection_screen", IsOnSiteSelection());
             PlanetTile selected = Find.WorldInterface.SelectedTile;
@@ -366,6 +369,12 @@ namespace RimWorldMcp.Bridge.Game
             if (detailed)
             {
                 json.Prop("elevation_m", tile.elevation);
+                json.Prop("movement_difficulty", WorldPathGrid.CalculatedMovementDifficultyAt(id, perceivedStatic: false));
+                json.Prop("nearby_pollution_score", WorldPollutionUtility.CalculateNearbyPollutionScore(id));
+                json.Prop("animals_can_graze_now", VirtualPlantsUtility.EnvironmentAllowsEatingVirtualPlantsNowAt(id));
+                json.Prop("time_zone", GenDate.TimeZoneAt(longLat.x));
+                WriteMonthlyTemperatures(json, id);
+                WriteNearbySettlements(json, id);
                 json.Prop("swampiness", tile.swampiness);
                 json.Prop("forageability_pct", GameAccess.Percent(tile.PrimaryBiome.forageability));
                 json.Prop("animal_density", tile.AnimalDensity);
@@ -377,6 +386,72 @@ namespace RimWorldMcp.Bridge.Game
             {
                 WritePocket(json, pocket.Value.Prediction, pocket.Value.Pocket);
             }
+        }
+
+        private static void WriteMonthlyTemperatures(JsonWriter json, PlanetTile id)
+        {
+            json.Key("monthly_average_temperatures_c").BeginArray();
+            foreach (Twelfth twelfth in Enum.GetValues(typeof(Twelfth)).Cast<Twelfth>().Where(t => t != Twelfth.Undefined))
+            {
+                json.Value(GenTemperature.AverageTemperatureAtTileForTwelfth(id, twelfth));
+            }
+            json.EndArray();
+        }
+
+        private static void WriteNearbySettlements(JsonWriter json, PlanetTile id)
+        {
+            var nearest = Find.WorldObjects.Settlements
+                .Where(s => s.Faction != null && s.Faction != Faction.OfPlayer && s.Tile.Layer == id.Layer)
+                .Select(s => (Settlement: s, Distance: Find.WorldGrid.ApproxDistanceInTiles(id, s.Tile)))
+                .OrderBy(s => s.Distance)
+                .Take(MaxNearbySettlements);
+
+            json.Key("nearby_settlements").BeginArray();
+            foreach ((Settlement settlement, float distance) in nearest)
+            {
+                json.BeginObject();
+                json.Prop("name", settlement.LabelCap);
+                json.Prop("faction", settlement.Faction.Name);
+                json.Prop("relation", settlement.Faction.PlayerRelationKind.ToString());
+                json.Prop("distance_tiles", distance);
+                json.EndObject();
+            }
+            json.EndArray();
+        }
+
+        /// <summary>The map size and starting season from the screen's advanced settings.</summary>
+        public static void SetOptions(QueryParams query, JsonWriter json)
+        {
+            RequireWorld();
+            if (!IsOnSiteSelection())
+            {
+                throw new BridgeException(409, "not_selecting_site", "The player is not on the site selection screen.");
+            }
+
+            if (query.GetString("map_size") != null)
+            {
+                int size = query.GetInt("map_size", 0, 1, int.MaxValue);
+                if (!Dialog_AdvancedGameConfig.MapSizes.Contains(size))
+                {
+                    throw new BadRequestException($"Map size must be one of: {string.Join(", ", Dialog_AdvancedGameConfig.MapSizes)}.");
+                }
+                Find.GameInitData.mapSize = size;
+            }
+
+            string season = query.GetString("season");
+            if (season != null)
+            {
+                if (!Enum.TryParse(season, ignoreCase: true, out Season parsed) || parsed == Season.PermanentSummer || parsed == Season.PermanentWinter)
+                {
+                    throw new BadRequestException("Season must be Undefined (the game's default), Spring, Summer, Fall or Winter.");
+                }
+                Find.GameInitData.startingSeason = parsed;
+            }
+
+            json.BeginObject();
+            json.Prop("map_size", Find.GameInitData.mapSize);
+            json.Prop("starting_season", Find.GameInitData.startingSeason.ToString());
+            json.EndObject();
         }
 
         private static void WriteLabels(JsonWriter json, string key, IEnumerable<string> labels)
@@ -456,6 +531,8 @@ namespace RimWorldMcp.Bridge.Game
             private readonly float maxDiseases;
             private readonly int minGrowingDays;
             private readonly float maxPollution;
+            private readonly int minStoneTypes;
+            private readonly List<string> requiredStones;
             private readonly Presence caves;
             private readonly Presence coast;
             private readonly Presence lake;
@@ -475,6 +552,8 @@ namespace RimWorldMcp.Bridge.Game
                 maxDiseases = query.GetInt("max_diseases_per_year", int.MaxValue, 0, int.MaxValue);
                 minGrowingDays = query.GetInt("min_growing_days", 0, 0, 60);
                 maxPollution = query.GetInt("max_pollution_pct", 100, 0, 100) / 100f;
+                minStoneTypes = query.GetInt("min_stone_types", 0, 0, 10);
+                requiredStones = query.GetList("require_stones");
                 caves = ReadPresence(query, "caves");
                 coast = ReadPresence(query, "coast");
                 lake = ReadPresence(query, "lake");
@@ -584,7 +663,17 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     return false;
                 }
-                return minGrowingDays == 0 || GrowingDays(tile) >= minGrowingDays;
+                if (minGrowingDays > 0 && GrowingDays(tile) < minGrowingDays)
+                {
+                    return false;
+                }
+                if (minStoneTypes == 0 && requiredStones.Count == 0)
+                {
+                    return true;
+                }
+                List<ThingDef> stones = Find.World.NaturalRockTypesIn(tile.tile).ToList();
+                return stones.Count >= minStoneTypes
+                    && requiredStones.All(r => stones.Any(s => string.Equals(s.defName, r, StringComparison.OrdinalIgnoreCase)));
             }
         }
     }

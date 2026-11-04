@@ -1,6 +1,6 @@
 # Tools
 
-All tools are read-only, except for `show_site`, `configure_ideo`, `find_starting_pawn`,
+All tools are read-only, except for `show_site`, `set_start_options`, `configure_ideo`, `find_starting_pawn`,
 `swap_starting_pawns` and `edit_starting_pawn`, which act on the new game screens when the player asks.
 Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
@@ -53,8 +53,9 @@ These work before a game starts, once a world has been generated.
 | Tool | Purpose |
 | --- | --- |
 | `get_world_settings` | Seed, world settings, the selected tile, and how many tiles have each biome, hilliness and feature. |
-| `search_sites` (`biomes`, `hilliness`, `min_growing_days`, `min_coldest_c`, `max_hottest_c`, `min_rainfall`, `max_rainfall`, `max_diseases_per_year`, `max_pollution_pct`, `caves`, `coast`, `lake`, `river`, `road`, `exclude_features`, `require_features`, `shape`, `min_pocket_score`, `min_rock_pct`, `max_rock_pct`, `limit`, `offset`) | Finds tiles that match, optionally ranked by predicted mountain shape. Every condition is optional. |
-| `get_site` (`tile`) | Full details of a tile, with a text preview of its predicted mountains. |
+| `search_sites` (`biomes`, `hilliness`, `min_growing_days`, `min_coldest_c`, `max_hottest_c`, `min_rainfall`, `max_rainfall`, `max_diseases_per_year`, `max_pollution_pct`, `min_stone_types`, `require_stones`, `caves`, `coast`, `lake`, `river`, `road`, `exclude_features`, `require_features`, `shape`, `min_pocket_score`, `min_rock_pct`, `max_rock_pct`, `limit`, `offset`) | Finds tiles that match, optionally ranked by predicted mountain shape. Every condition is optional. |
+| `get_site` (`tile`) | Full details of a tile, including movement difficulty, nearby pollution, grazing, time zone, monthly temperatures and nearby settlements, with a text preview of its predicted mountains. |
+| `set_start_options` (`map_size`, `season`) | Sets the map size and starting season. Only when the player asks. |
 | `show_site` (`tile`) | Moves the camera to a tile, zooms in and selects it. |
 
 Searches follow what the player asks for. For example, a sheltered, mild, all-year site with no hives:
@@ -86,9 +87,9 @@ Or a flat site next to water, with caves to explore:
 
 | Tool | Purpose |
 | --- | --- |
-| `get_ideo_options` (`section`, `issue`) | Presets, memes, precept topics, the precepts of a topic, icons and colors, including those from mods. |
+| `get_ideo_options` (`section`, `issue`) | Presets, memes, precept topics, the precepts of a topic, icons, colors, cultures and styles, including those from mods. |
 | `get_ideo_setup` | The current screen and the ideoligion being edited, with anything that blocks continuing. |
-| `configure_ideo` (`preset`, `memes`, `structure`, `precepts`, `remove_precepts`, `name`, `adjective`, `member_name`, `worship_room`, `icon`, `color`) | With a preset or memes, builds a new ideoligion with the game's generator. Without them, edits the current one and keeps everything else. Only when the player asks. The player presses Next. |
+| `configure_ideo` (`preset`, `memes`, `structure`, `precepts`, `remove_precepts`, `name`, `adjective`, `member_name`, `worship_room`, `icon`, `color`, `culture`, `styles`) | With a preset or memes, builds a new ideoligion with the game's generator. Without them, edits the current one and keeps everything else. Only when the player asks. The player presses Next. |
 
 ## Colonists
 
@@ -97,7 +98,7 @@ Or a flat site next to water, with caves to explore:
 | `get_starting_pawns` | Every colonist on offer, in full, and essential work nobody selected can do. |
 | `find_starting_pawn` (`index`, `gender`, `min_age`, `max_age`, `min_skills`, `passions`, `require_traits`, `forbid_traits`, `must_be_capable_of`) | Generates candidates with the game's generator and keeps the closest match. Only when the player asks. |
 | `swap_starting_pawns` (`first`, `second`) | Swaps two colonists, which is how one left behind joins the group. Only when the player asks. |
-| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`) | Sets attributes directly. Only when the player explicitly asks. |
+| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`) | Sets attributes directly. Only when the player explicitly asks. |
 
 ## Connection
 

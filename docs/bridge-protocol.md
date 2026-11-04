@@ -82,6 +82,7 @@ Failure looks like this:
 | `/v1/sites/search` | See `docs/tools.md` | `search_sites` |
 | `/v1/sites/get` | `tile` | `get_site` |
 | `POST /v1/sites/show` | `tile` | `show_site` |
+| `POST /v1/sites/options` | `map_size`, `season` | `set_start_options` |
 | `/v1/ideo/options` | `section`, `issue` | `get_ideo_options` |
 | `/v1/ideo/setup` | | `get_ideo_setup` |
 | `POST /v1/ideo/configure` | See `docs/tools.md` | `configure_ideo` |

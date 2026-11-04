@@ -41,6 +41,7 @@ describe("MCP server", () => {
       expect(tool.annotations?.readOnlyHint, tool.name).toBe(
         ![
           "show_site",
+          "set_start_options",
           "configure_ideo",
           "find_starting_pawn",
           "swap_starting_pawns",

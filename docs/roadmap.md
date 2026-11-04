@@ -20,9 +20,9 @@ Plans can change. Feedback and ideas are welcome in the issues.
 - [x] Choose a site and move the camera to it
 - [x] Set up the ideoligion on request
 - [x] Find, swap and edit colonists on request
-- [ ] Fluid ideoligions and styles
+- [ ] Fluid ideoligions, and adding relics, buildings and apparel desires
 - [ ] Letting the assistant see icons, not just their names
-- [ ] Colonists' gender, xenotype, appearance and starting gear
+- [ ] Colonists' worn apparel, weapons, implants, head and body shape
 - [ ] The scenario, storyteller and world settings screens
 
 ## Actions (next)

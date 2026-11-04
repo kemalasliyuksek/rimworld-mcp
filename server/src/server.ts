@@ -3,7 +3,7 @@ import { BridgeRequestError, type BridgeConnection, type QueryValue } from "./br
 import { BridgeNotFoundError } from "./discovery.js";
 import { tools } from "./tools.js";
 
-const INSTRUCTIONS = `These tools read the player's running game of RimWorld, live. They never modify the game's code or files, and while a game is being played they only observe. On the new game screens, a few tools can act for the player when asked: show_site moves the camera to a site, configure_ideo sets up the ideoligion, and find_starting_pawn, swap_starting_pawns and edit_starting_pawn change the colonists. Use them only when the player wants that. The player always confirms the result themselves.
+const INSTRUCTIONS = `These tools read the player's running game of RimWorld, live. They never modify the game's code or files, and while a game is being played they only observe. On the new game screens, a few tools can act for the player when asked: show_site and set_start_options handle the site, configure_ideo sets up the ideoligion, and find_starting_pawn, swap_starting_pawns and edit_starting_pawn change the colonists. Use them only when the player wants that. The player always confirms the result themselves.
 
 When the player asks about their game, look at it before answering instead of asking them to describe it or send a screenshot. Begin with get_colony_overview, add get_player_focus if they say "this" or are facing a decision, and then use the more specific tools as needed.
 

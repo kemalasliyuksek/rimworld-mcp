@@ -239,6 +239,32 @@ namespace RimWorldMcp.Bridge.Game
             json.EndArray();
 
             json.Prop("disabled_work", pawn.CombinedDisabledWorkTags.ToString());
+            json.Prop("favorite_color", pawn.story.favoriteColor?.defName);
+            json.Prop("hair", pawn.story.hairDef?.defName);
+            json.Prop("beard", pawn.style?.beardDef?.defName);
+            json.Prop("weapon", GameAccess.Clean(pawn.equipment?.Primary?.LabelCap));
+            json.Key("apparel").BeginArray();
+            if (pawn.apparel != null)
+            {
+                foreach (Apparel apparel in pawn.apparel.WornApparel)
+                {
+                    json.Value(GameAccess.Clean(apparel.LabelCap));
+                }
+            }
+            json.EndArray();
+            json.Key("possessions").BeginArray();
+            if (Find.GameInitData.startingPossessions.TryGetValue(pawn, out List<ThingDefCount> possessions))
+            {
+                foreach (ThingDefCount possession in possessions)
+                {
+                    json.BeginObject();
+                    json.Prop("def", possession.ThingDef.defName);
+                    json.Prop("label", possession.ThingDef.label);
+                    json.Prop("count", possession.Count);
+                    json.EndObject();
+                }
+            }
+            json.EndArray();
             json.Key("health").BeginArray();
             foreach (Hediff hediff in pawn.health.hediffSet.hediffs.Where(h => h.Visible))
             {
@@ -451,6 +477,12 @@ namespace RimWorldMcp.Bridge.Game
             private readonly List<TraitDef> removedTraits = new List<TraitDef>();
             private readonly List<(TraitDef Trait, int Degree)> addedTraits = new List<(TraitDef, int)>();
             private bool clearHealth;
+            private Gender? gender;
+            private HairDef hair;
+            private BeardDef beard;
+            private ColorDef favoriteColor;
+            private XenotypeDef xenotype;
+            private List<ThingDefCount> possessions;
 
             public static PawnEdit Validate(Pawn pawn, QueryParams query)
             {
@@ -490,7 +522,54 @@ namespace RimWorldMcp.Bridge.Game
                     edit.addedTraits.Add(ResolveAddedTrait(entry));
                 }
                 edit.CheckTraits(pawn);
+
+                string genderName = query.GetString("gender");
+                if (genderName != null)
+                {
+                    if (!Enum.TryParse(genderName, ignoreCase: true, out Gender parsed) || parsed == Gender.None)
+                    {
+                        throw new BadRequestException("Parameter 'gender' must be Male or Female.");
+                    }
+                    edit.gender = parsed;
+                }
+                edit.hair = ResolveStyleDef<HairDef>(query.GetString("hair"));
+                edit.beard = ResolveStyleDef<BeardDef>(query.GetString("beard"));
+                edit.favoriteColor = ResolveStyleDef<ColorDef>(query.GetString("favorite_color"));
+                edit.xenotype = ResolveStyleDef<XenotypeDef>(query.GetString("xenotype"));
+                if (edit.xenotype != null && !ModsConfig.BiotechActive)
+                {
+                    throw new BadRequestException("Changing xenotype needs the Biotech expansion.");
+                }
+
+                List<(string Name, string Value)> items = query.GetPairs("possessions");
+                if (items.Count > 0)
+                {
+                    edit.possessions = new List<ThingDefCount>();
+                    foreach ((string name, string value) in items)
+                    {
+                        ThingDef item = DefDatabase<ThingDef>.GetNamedSilentFail(name);
+                        if (item == null || item.category != ThingCategory.Item)
+                        {
+                            throw new NotFoundException($"No item named '{name}'. Find names with search_defs and type ThingDef.");
+                        }
+                        if (!int.TryParse(value, out int count) || count < 1)
+                        {
+                            throw new BadRequestException($"The count for '{name}' must be a positive number.");
+                        }
+                        edit.possessions.Add(new ThingDefCount(item, count));
+                    }
+                }
                 return edit;
+            }
+
+            private static T ResolveStyleDef<T>(string name) where T : Def
+            {
+                if (name == null)
+                {
+                    return null;
+                }
+                return DefDatabase<T>.GetNamedSilentFail(name)
+                    ?? throw new NotFoundException($"No {typeof(T).Name} named '{name}'. Find names with search_defs.");
             }
 
             private static BackstoryDef ResolveBackstory(string name, BackstorySlot slot)
@@ -548,6 +627,22 @@ namespace RimWorldMcp.Bridge.Game
                 }
             }
 
+            // A pawn's body, head and hair are chosen for their gender when they are generated.
+            private static void ChangeGender(Pawn pawn, Gender newGender)
+            {
+                pawn.gender = newGender;
+                if (pawn.story.bodyType == BodyTypeDefOf.Male || pawn.story.bodyType == BodyTypeDefOf.Female)
+                {
+                    pawn.story.bodyType = newGender == Gender.Female ? BodyTypeDefOf.Female : BodyTypeDefOf.Male;
+                }
+                pawn.story.TryGetRandomHeadFromSet(DefDatabase<HeadTypeDef>.AllDefs.Where(h => h.randomChosen && (h.gender == Gender.None || h.gender == newGender)));
+                pawn.story.hairDef = PawnStyleItemChooser.RandomHairFor(pawn);
+                if (newGender == Gender.Female && pawn.style != null)
+                {
+                    pawn.style.beardDef = BeardDefOf.NoBeard;
+                }
+            }
+
             public void Apply(Pawn pawn)
             {
                 if (firstName != null || nickname != null || lastName != null)
@@ -596,6 +691,31 @@ namespace RimWorldMcp.Bridge.Game
                     {
                         pawn.health.RemoveHediff(hediff);
                     }
+                }
+
+                if (gender != null && gender != pawn.gender)
+                {
+                    ChangeGender(pawn, gender.Value);
+                }
+                if (hair != null)
+                {
+                    pawn.story.hairDef = hair;
+                }
+                if (beard != null && pawn.style != null)
+                {
+                    pawn.style.beardDef = beard;
+                }
+                if (favoriteColor != null)
+                {
+                    pawn.story.favoriteColor = favoriteColor;
+                }
+                if (xenotype != null)
+                {
+                    pawn.genes?.SetXenotype(xenotype);
+                }
+                if (possessions != null)
+                {
+                    Find.GameInitData.startingPossessions[pawn] = possessions;
                 }
 
                 // Backstories and traits can change which work and skills are disabled.

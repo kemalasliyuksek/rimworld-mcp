@@ -16,6 +16,8 @@ namespace RimWorldMcp.Bridge.Game
     {
         private const int MaxDescription = 220;
 
+        private const int MaxStyles = 3;
+
         // The game has no public way to go from the preset screen to the customization screen.
         private static readonly MethodInfo DoCustomizeMethod =
             typeof(Page_ChooseIdeoPreset).GetMethod("DoCustomize", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -71,8 +73,14 @@ namespace RimWorldMcp.Bridge.Game
                 case "colors":
                     WriteColors(json);
                     break;
+                case "cultures":
+                    WriteNamedDefs(json, "cultures", AllowedCultures());
+                    break;
+                case "styles":
+                    WriteNamedDefs(json, "styles", DefDatabase<StyleCategoryDef>.AllDefs.Where(s => !s.fixedIdeoOnly));
+                    break;
                 default:
-                    throw new BadRequestException("Parameter 'section' must be presets, memes, issues, precepts, icons or colors.");
+                    throw new BadRequestException("Parameter 'section' must be presets, memes, issues, precepts, icons, colors, cultures or styles.");
             }
             json.EndObject();
         }
@@ -178,6 +186,25 @@ namespace RimWorldMcp.Bridge.Game
             return ideo != null && ideo.memes.Any() ? ideo : null;
         }
 
+        private static IEnumerable<CultureDef> AllowedCultures()
+        {
+            return Faction.OfPlayer.def.allowedCultures ?? DefDatabase<CultureDef>.AllDefsListForReading;
+        }
+
+        private static void WriteNamedDefs(JsonWriter json, string key, IEnumerable<Def> defs)
+        {
+            json.Key(key).BeginArray();
+            foreach (Def def in defs)
+            {
+                json.BeginObject();
+                json.Prop("def", def.defName);
+                json.Prop("label", def.label);
+                json.Prop("mod", def.modContentPack?.Name);
+                json.EndObject();
+            }
+            json.EndArray();
+        }
+
         private static void WriteIcons(JsonWriter json)
         {
             Ideo ideo = EditedIdeo();
@@ -248,6 +275,16 @@ namespace RimWorldMcp.Bridge.Game
             List<PreceptDef> removals = query.GetList("remove_precepts").Select(n => ResolveDef<PreceptDef>(n)).ToList();
             IdeoIconDef icon = ResolveDef<IdeoIconDef>(query.GetString("icon"));
             ColorDef color = ResolveColor(query.GetString("color"));
+            CultureDef culture = ResolveDef<CultureDef>(query.GetString("culture"));
+            if (culture != null && !AllowedCultures().Contains(culture))
+            {
+                throw new BadRequestException($"The player's faction cannot use the culture '{culture.defName}'.");
+            }
+            List<StyleCategoryDef> styles = query.GetList("styles").Select(n => ResolveDef<StyleCategoryDef>(n)).ToList();
+            if (styles.Count > MaxStyles)
+            {
+                throw new BadRequestException($"An ideoligion can have at most {MaxStyles} styles.");
+            }
 
             Ideo ideo;
             if (rebuild)
@@ -317,6 +354,21 @@ namespace RimWorldMcp.Bridge.Game
                 ideo.WorshipRoomLabel = worshipRoom;
             }
 
+            if (culture != null)
+            {
+                ideo.culture = culture;
+            }
+            if (styles.Count > 0)
+            {
+                // The first style has the highest priority, as on the game's own screen.
+                ideo.thingStyleCategories.Clear();
+                for (int i = 0; i < styles.Count; i++)
+                {
+                    ideo.thingStyleCategories.Add(new ThingStyleCategoryWithPriority(styles[i], MaxStyles - i));
+                }
+                ideo.SortStyleCategories();
+                ideo.style.ResetStylesForThingDef();
+            }
             if (icon != null || color != null)
             {
                 // The faction's own color overrides this one unless it is cleared.
@@ -461,6 +513,7 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("culture", ideo.culture?.label);
             json.Prop("icon", ideo.iconDef?.defName);
             json.Prop("color", ideo.colorDef?.defName);
+            WriteDefNames(json, "styles", ideo.thingStyleCategories.Select(s => (Def)s.category));
             json.Prop("description", GameAccess.Clean(ideo.description));
             WriteDefNames(json, "memes", ideo.memes);
             json.Key("precepts").BeginArray();

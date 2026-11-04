@@ -234,6 +234,8 @@ export const tools: readonly ToolDefinition[] = [
       max_rainfall: z.number().int().min(0).optional().describe("Yearly rainfall in mm."),
       max_diseases_per_year: z.number().int().min(0).optional(),
       max_pollution_pct: z.number().int().min(0).max(100).optional(),
+      min_stone_types: z.number().int().min(0).max(10).optional(),
+      require_stones: z.string().optional().describe("Comma-separated stone ThingDef defNames, such as Granite."),
       caves: presence("cave tunnels, which contain insect hives"),
       coast: presence("an ocean coast"),
       lake: presence("a lake shore"),
@@ -271,6 +273,18 @@ export const tools: readonly ToolDefinition[] = [
     },
   },
   {
+    name: "set_start_options",
+    title: "Map size and season",
+    description:
+      "Only when the player asks. On the site selection screen, sets the map size and the starting season from the screen's advanced settings.",
+    path: "/v1/sites/options",
+    acts: true,
+    inputSchema: {
+      map_size: z.number().int().optional().describe("One of 200, 225, 250, 275, 300 or 325."),
+      season: z.enum(["Undefined", "Spring", "Summer", "Fall", "Winter"]).optional().describe("Undefined is the game's default."),
+    },
+  },
+  {
     name: "show_site",
     title: "Show site in game",
     description:
@@ -289,7 +303,7 @@ export const tools: readonly ToolDefinition[] = [
     path: "/v1/ideo/options",
     inputSchema: {
       section: z
-        .enum(["presets", "memes", "issues", "precepts", "icons", "colors"])
+        .enum(["presets", "memes", "issues", "precepts", "icons", "colors", "cultures", "styles"])
         .optional()
         .describe("Defaults to presets. Icons and colors are filtered to fit the ideoligion being edited."),
       issue: z.string().optional().describe("Issue defName. Required for the precepts section."),
@@ -325,6 +339,8 @@ export const tools: readonly ToolDefinition[] = [
       remove_precepts: z.string().optional().describe("Comma-separated PreceptDef defNames to remove."),
       icon: z.string().optional().describe("IdeoIconDef defName, from the icons section of get_ideo_options."),
       color: z.string().optional().describe("ColorDef defName, from the colors section of get_ideo_options."),
+      culture: z.string().optional().describe("CultureDef defName, from the cultures section of get_ideo_options."),
+      styles: z.string().optional().describe("Comma-separated StyleCategoryDef defNames, highest priority first. Replaces the current styles."),
     },
   },
   {
@@ -373,7 +389,7 @@ export const tools: readonly ToolDefinition[] = [
     name: "edit_starting_pawn",
     title: "Edit a colonist",
     description:
-      "Only when the player explicitly asks to change specific attributes, since this goes beyond what the game normally allows. Directly sets the attributes you pass and leaves the others alone. Changing a backstory does not recalculate skills, so set those too if they should change. Find trait and backstory names with search_defs. It cannot change gender, xenotype, appearance or gear yet: for gender, use find_starting_pawn.",
+      "Only when the player explicitly asks to change specific attributes, since this goes beyond what the game normally allows. Directly sets the attributes you pass and leaves the others alone. Changing a backstory does not recalculate skills, so set those too if they should change. Find trait and backstory names with search_defs. It cannot change worn apparel, weapons, head or body shape yet.",
     path: "/v1/starting-pawns/edit",
     acts: true,
     inputSchema: {
@@ -389,6 +405,12 @@ export const tools: readonly ToolDefinition[] = [
       add_traits: z.string().optional().describe("TraitDef defNames, with a level if it has several, for example Tough,Beauty:2."),
       remove_traits: z.string().optional().describe("Comma-separated TraitDef defNames."),
       clear_health: z.enum(["true"]).optional().describe("Removes all visible health conditions."),
+      gender: z.enum(["Male", "Female"]).optional().describe("Also picks a new head and hair to suit."),
+      hair: z.string().optional().describe("HairDef defName."),
+      beard: z.string().optional().describe("BeardDef defName."),
+      favorite_color: z.string().optional().describe("ColorDef defName."),
+      xenotype: z.string().optional().describe("XenotypeDef defName. Needs Biotech. Replaces the pawn's genes."),
+      possessions: z.string().optional().describe("Items they bring, replacing the current list, for example MedicineIndustrial:5."),
     },
   },
   {
