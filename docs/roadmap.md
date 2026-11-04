@@ -37,8 +37,10 @@ Everything a player can do, and everything cheats can do, always on the player's
 - [x] Game speed, so that an assistant can play for the player when asked
 - [x] Cheats, such as spawning items, editing pawns and triggering events
 - [x] Hidden information, when the player asks about it
-- [ ] Trade and caravans, whose windows need their own tools
-- [ ] Allowed areas, apparel and drug policies, and storage filters
+- [x] Trade and caravans
+- [x] Allowed areas, apparel and drug policies, and storage filters
+- [ ] Psycasts and abilities, which use their own targeting
+- [ ] Editing bill details, and creating new policies
 
 ## Compatibility
 

@@ -90,6 +90,14 @@ Failure looks like this:
 | `POST /v1/dialogs/answer` | `choice` | `answer_dialog` |
 | `/v1/letters` | | `list_letters` |
 | `POST /v1/letters/answer` | `letter`, `choice` | `answer_letter` |
+| `/v1/policies` | `map` | `list_policies` |
+| `POST /v1/pawn/policies` | See `docs/tools.md` | `set_pawn_policies` |
+| `POST /v1/colony/stockpile` | See `docs/tools.md` | `set_stockpile` |
+| `/v1/trade/traders` | `map` | `list_traders` |
+| `/v1/trade/goods` | `trader`, `negotiator` | `get_trader_goods` |
+| `POST /v1/trade/deal` | `trader`, `negotiator`, `deal` | `trade` |
+| `POST /v1/caravans/form` | `pawns`, `items`, `tile` | `form_caravan` |
+| `POST /v1/caravans/send` | `caravan`, `tile` | `send_caravan` |
 | `POST /v1/cheats/spawn-thing` | See `docs/tools.md` | `spawn_thing` |
 | `POST /v1/cheats/spawn-pawn` | See `docs/tools.md` | `spawn_pawn` |
 | `POST /v1/cheats/incident` | `incident`, `points`, `map` | `trigger_incident` |

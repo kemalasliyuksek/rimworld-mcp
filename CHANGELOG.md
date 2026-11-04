@@ -9,7 +9,7 @@ All notable changes to this project are documented here. The format is based on
 ### Added
 
 - RimWorld 1.6 bridge mod with a local, token-protected HTTP API that cannot change the game's code or files.
-- MCP server with 66 tools covering the colony, the player's focus, pawns, threats, resources, the
+- MCP server with 74 tools covering the colony, the player's focus, pawns, threats, resources, the
   base, research, events, the world, the map, game data and mods.
 - Scenario, storyteller, difficulty and world settings tools on the first new game screens, on the
   player's request.
@@ -38,11 +38,13 @@ All notable changes to this project are documented here. The format is based on
 - Cheats on the player's request: spawning things and pawns, firing events, finishing research, editing
   pawns, building instantly and revealing the map.
 - `view_map` and `inspect_cell` can show hidden information, only for when the player asks about it.
+- Pawn policies and allowed areas, stockpile settings, trade and caravans, on the player's request.
 
 ### Fixed
 
 - Buttons that act on the selected pawn no longer act on what the player has selected.
 - The stored weapons list no longer includes things like wood.
+- The overview now lists conditions on the whole world, such as an aurora, not just those on the map.
 
 ### Changed
 

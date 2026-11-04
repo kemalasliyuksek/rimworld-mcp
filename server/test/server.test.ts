@@ -72,6 +72,11 @@ describe("MCP server", () => {
           "complete_research",
           "edit_pawn",
           "reveal_map",
+          "set_pawn_policies",
+          "set_stockpile",
+          "trade",
+          "form_caravan",
+          "send_caravan",
         ].includes(tool.name),
       );
       expect(tool.annotations?.destructiveHint, tool.name).toBe(false);

@@ -55,6 +55,8 @@ const pawnEditFields = {
   add_implants: z.string().optional().describe("Comma-separated HediffDef defNames of surgical implants, such as BionicArm."),
 };
 
+const { possessions: _possessions, ...duringPlayEditFields } = pawnEditFields;
+
 export const tools: readonly ToolDefinition[] = [
   {
     name: "get_colony_overview",
@@ -382,6 +384,96 @@ export const tools: readonly ToolDefinition[] = [
     },
   },
   {
+    name: "list_policies",
+    title: "Policies",
+    description: "The names set_pawn_policies takes: allowed areas, outfits, drug and food policies, hostility responses and medical care.",
+    path: "/v1/policies",
+    inputSchema: { map: mapParam },
+  },
+  {
+    name: "set_pawn_policies",
+    title: "Set a pawn's policies",
+    description: "Only when the player asks. Sets a pawn's allowed area, outfit, drug and food policy, hostility response and medical care, as on the game's Assign tab. Names come from list_policies.",
+    path: "/v1/pawn/policies",
+    acts: true,
+    inputSchema: {
+      pawn: z.string().min(1).describe("Pawn id from list_pawns, or the pawn's name."),
+      area: z.string().optional().describe("Area name, or none for unrestricted."),
+      outfit: z.string().optional(),
+      drug_policy: z.string().optional(),
+      food_policy: z.string().optional(),
+      hostility_response: z.string().optional(),
+      medical_care: z.string().optional(),
+    },
+  },
+  {
+    name: "set_stockpile",
+    title: "Set a stockpile",
+    description: "Only when the player asks. Changes a stockpile's priority and what it accepts. allow and disallow run after preset.",
+    path: "/v1/colony/stockpile",
+    acts: true,
+    inputSchema: {
+      x: z.number().int().min(0).describe("Any cell in the stockpile."),
+      z: z.number().int().min(0),
+      priority: z.enum(["Low", "Normal", "Preferred", "Important", "Critical"]).optional(),
+      preset: z.enum(["all", "none"]).optional().describe("Start by accepting everything or nothing."),
+      allow: z.string().optional().describe("Comma-separated ThingDef or ThingCategoryDef defNames, such as Steel,FoodMeals."),
+      disallow: z.string().optional().describe("Comma-separated ThingDef or ThingCategoryDef defNames."),
+    },
+  },
+  {
+    name: "list_traders",
+    title: "Traders",
+    description: "Traders on the map and orbital ships in range, with the ids the trade tools take.",
+    path: "/v1/trade/traders",
+    inputSchema: { map: mapParam },
+  },
+  {
+    name: "get_trader_goods",
+    title: "Trader's goods",
+    description: "What can be bought from and sold to a trader, at the prices a given negotiator gets, and how much silver each side has. Prices differ by negotiator, so compare before trading.",
+    path: "/v1/trade/goods",
+    inputSchema: {
+      trader: z.string().min(1).describe("An id from list_traders."),
+      negotiator: z.string().min(1).describe("The colonist doing the talking."),
+    },
+  },
+  {
+    name: "trade",
+    title: "Trade",
+    description: "Only when the player asks. Makes a deal with a trader at once, with silver covering the difference. Nobody walks over, unlike in the normal game, and the negotiator must be on the map. An orbital ship normally needs a comms console, and this does not check for one, so make sure the player has one unless they asked to cheat.",
+    path: "/v1/trade/deal",
+    acts: true,
+    inputSchema: {
+      trader: z.string().min(1).describe("An id from list_traders."),
+      negotiator: z.string().min(1).describe("The colonist doing the talking."),
+      deal: z.string().min(1).describe("ThingDef defNames with a count, positive to buy and negative to sell, for example Steel:50,WoodLog:-20."),
+    },
+  },
+  {
+    name: "form_caravan",
+    title: "Form a caravan",
+    description: "Only when the player asks, since it sends colonists away from the colony. The colonists gather what is listed and leave the map, and the caravan appears on the world map. This does not check the weight or food as the game's window does, so choose with care. They can be stopped with the cancel button in list_gizmos.",
+    path: "/v1/caravans/form",
+    acts: true,
+    inputSchema: {
+      pawns: z.string().min(1).describe("Comma-separated pawn ids or names."),
+      items: z.string().optional().describe("ThingDef defNames with a count, for example MealSurvivalPack:20,Silver:300."),
+      tile: z.number().int().min(0).optional().describe("World tile to head for after leaving."),
+    },
+  },
+  {
+    name: "send_caravan",
+    title: "Send a caravan",
+    description: "Only when the player asks. Sends a caravan to a world tile. Caravans are listed by get_world, and search_sites and get_site find tiles.",
+    path: "/v1/caravans/send",
+    acts: true,
+    inputSchema: {
+      caravan: z.string().min(1).describe("The caravan's label from get_world."),
+      tile: z.number().int().min(0),
+    },
+  },
+  {
     name: "spawn_thing",
     title: "Spawn a thing",
     description:
@@ -446,7 +538,7 @@ export const tools: readonly ToolDefinition[] = [
     acts: true,
     inputSchema: {
       pawn: z.string().min(1).describe("Pawn id from list_pawns, or the pawn's name."),
-      ...pawnEditFields,
+      ...duringPlayEditFields,
     },
   },
   {

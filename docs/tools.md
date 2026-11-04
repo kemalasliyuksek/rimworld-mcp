@@ -3,7 +3,7 @@
 All tools are read-only, except for those marked as acting on request: `configure_new_game`, `show_site`,
 `set_start_options`, `configure_ideo`, `find_starting_pawn`, `swap_starting_pawns`, `edit_starting_pawn`,
 `set_game_settings`, `configure_mods`, `set_mod_settings`, `set_work_priorities`, `set_schedule`,
-`set_drafted`, `move_pawns`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan`, `remove_plan`, `set_game_speed`, `set_research`, `add_bill`, `remove_bill`, `set_crop`, `answer_dialog`, `answer_letter`, and the cheats below. The mod's settings can turn acting tools, cheats and hidden information off. Those marked with `map` accept an optional map id and default to the map the player
+`set_drafted`, `move_pawns`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan`, `remove_plan`, `set_game_speed`, `set_research`, `add_bill`, `remove_bill`, `set_crop`, `answer_dialog`, `answer_letter`, `set_pawn_policies`, `set_stockpile`, `trade`, `form_caravan`, `send_caravan`, and the cheats below. The mod's settings can turn acting tools, cheats and hidden information off. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -65,6 +65,14 @@ Cells are parts separated by semicolons: a cell (`10,20`), a filled rectangle (`
 | `answer_dialog` (`choice`) | Chooses an option in the dialog on screen. Only when the player asks. |
 | `list_letters` | Letters with their text and choices. |
 | `answer_letter` (`letter`, `choice`) | Chooses an option in a letter. Only when the player asks. |
+| `list_policies` (`map`) | Names of areas, outfits, drug and food policies and more. |
+| `set_pawn_policies` (`pawn`, `area`, `outfit`, `drug_policy`, `food_policy`, `hostility_response`, `medical_care`) | Sets what is on the Assign tab. Only when the player asks. |
+| `set_stockpile` (`x`, `z`, `priority`, `preset`, `allow`, `disallow`) | Changes a stockpile's priority and filter. Only when the player asks. |
+| `list_traders` (`map`) | Traders on the map and ships in range. |
+| `get_trader_goods` (`trader`, `negotiator`) | What can be bought and sold, and at what price. |
+| `trade` (`trader`, `negotiator`, `deal`) | Makes a deal at once. Only when the player asks. |
+| `form_caravan` (`pawns`, `items`, `tile`) | Has colonists pack and leave. Only when the player asks. |
+| `send_caravan` (`caravan`, `tile`) | Sends a caravan to a world tile. Only when the player asks. |
 
 ## Cheats
 

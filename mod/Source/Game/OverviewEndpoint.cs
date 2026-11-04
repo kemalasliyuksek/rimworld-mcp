@@ -124,7 +124,10 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("danger", map.dangerWatcher.DangerRating.ToString());
             json.Prop("wealth", map.wealthWatcher.WealthTotal);
             json.Key("conditions").BeginArray();
-            foreach (GameCondition condition in map.gameConditionManager.ActiveConditions)
+            // Map conditions alone would miss those on the whole world, such as an aurora.
+            var conditions = new List<GameCondition>();
+            map.gameConditionManager.GetAllGameConditionsAffectingMap(map, conditions);
+            foreach (GameCondition condition in conditions)
             {
                 json.BeginObject();
                 json.Prop("label", GameAccess.Clean(condition.LabelCap));
