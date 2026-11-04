@@ -66,7 +66,7 @@ namespace RimWorldMcp.Bridge.Game
             string name = query.RequireString("name");
             if (PoliciesOf(kind).Any(p => string.Equals(p.label, name, StringComparison.OrdinalIgnoreCase)))
             {
-                throw new BadRequestException($"There is already a {kind} policy named '{name}'.");
+                throw new BadRequestException($"That kind of policy already has one named '{name}'.");
             }
             string copyName = query.GetString("copy_from");
             Policy source = copyName == null ? null : ResolvePolicy(kind, copyName);
@@ -381,9 +381,7 @@ namespace RimWorldMcp.Bridge.Game
                 bills.Reorder(bill, offset.Value);
             }
 
-            json.BeginObject();
             BaseEndpoint.WriteBill(json, bill);
-            json.EndObject();
         }
     }
 }
