@@ -51,7 +51,7 @@ is looking at.
 | Tool | Purpose |
 | --- | --- |
 | `get_new_game_setup` | The open scenario, storyteller or world settings screen, its choices and every option. |
-| `configure_new_game` (`scenario`, `storyteller`, `difficulty`, `difficulty_values`, `seed`, `factions`, `planet_coverage_pct`, `rainfall`, `temperature`, `population`, `landmark_density`, `pollution_pct`) | Sets choices on the open screen. Only when the player asks. |
+| `configure_new_game` (`scenario`, `storyteller`, `difficulty`, `difficulty_values`, `game_mode`, `seed`, `factions`, `planet_coverage_pct`, `rainfall`, `temperature`, `population`, `landmark_density`, `pollution_pct`) | Sets choices on the open screen. Only when the player asks. |
 
 ## Choosing a site
 

@@ -227,6 +227,7 @@ export const tools: readonly ToolDefinition[] = [
         .string()
         .optional()
         .describe("Storyteller screen: individual values, which switch to the custom difficulty, for example allowCaveHives:false,threatScale:0.8."),
+      game_mode: z.enum(["reload", "commitment"]).optional().describe("Storyteller screen: reload anytime, or commitment (permadeath). The game requires this choice, along with a difficulty, before Next."),
       seed: z.string().optional().describe("World screen."),
       factions: z.string().optional().describe("World screen: the factions in the world and how many of each, replacing the current choice, for example OutlanderCivil:1,Pirate:2. See faction_options."),
       planet_coverage_pct: z.number().int().optional().describe("World screen: 30, 50 or 100."),

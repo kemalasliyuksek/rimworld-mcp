@@ -127,6 +127,9 @@ namespace RimWorldMcp.Bridge.Game
 
             json.Prop("selected_storyteller", storyteller?.defName);
             json.Prop("selected_difficulty", difficulty?.defName);
+            GameInitData init = Find.GameInitData;
+            json.Prop("selected_game_mode", init == null || !init.permadeathChosen ? null : init.permadeath ? "commitment" : "reload");
+            json.Prop("ready_for_next", difficulty != null && init != null && init.permadeathChosen);
             json.Key("storytellers").BeginArray();
             foreach (StorytellerDef def in DefDatabase<StorytellerDef>.AllDefs.Where(d => d.listVisible).OrderBy(d => d.listOrder))
             {
@@ -187,9 +190,19 @@ namespace RimWorldMcp.Bridge.Game
                     ?? throw new NotFoundException($"No difficulty value named '{name}'.");
                 overrides.Add((field, ParseDifficultyValue(field, value)));
             }
-            if (storyteller == null && difficulty == null && overrides.Count == 0)
+            string gameMode = query.GetString("game_mode");
+            if (gameMode != null && gameMode != "reload" && gameMode != "commitment")
             {
-                throw new BadRequestException("Pass 'storyteller', 'difficulty' or 'difficulty_values'.");
+                throw new BadRequestException("Parameter 'game_mode' must be reload or commitment.");
+            }
+            if (storyteller == null && difficulty == null && overrides.Count == 0 && gameMode == null)
+            {
+                throw new BadRequestException("Pass 'storyteller', 'difficulty', 'difficulty_values' or 'game_mode'.");
+            }
+            if (gameMode != null)
+            {
+                Find.GameInitData.permadeathChosen = true;
+                Find.GameInitData.permadeath = gameMode == "commitment";
             }
 
             if (storyteller != null)
