@@ -2,7 +2,7 @@
 
 Plans can change. Feedback and ideas are welcome in the issues.
 
-## Observation (current)
+## Observation
 
 - [x] Live colony, pawn, threat, base, world and map data
 - [x] Game data search across the base game, DLCs and active mods
@@ -25,7 +25,7 @@ Plans can change. Feedback and ideas are welcome in the issues.
 - [x] Faction choices in the world settings
 - [x] RimWorld settings, the mod list and mods' settings, on request
 
-## Actions (next)
+## Actions
 
 Everything a player can do, and everything cheats can do, always on the player's request.
 

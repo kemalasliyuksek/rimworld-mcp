@@ -8,7 +8,7 @@
   <supportedVersions>
     <li>1.6</li>
   </supportedVersions>
-  <description>Lets AI assistants such as Claude Code see your running game through the Model Context Protocol, so you can ask "what should I do next?" and get an answer based on your actual colony.
+  <description>Lets AI assistants such as Claude Code see your running game through the Model Context Protocol, so you can ask "what should I do next?" and get an answer based on your actual colony, or tell them to act for you.
 
 It can also find you a place to settle: describe what you want, and it searches the world, ranks tiles by the shape of their predicted mountains and moves the camera to its favorite.
 

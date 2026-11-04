@@ -52,6 +52,9 @@ While a long event is running, the game may be loading on another thread, so the
   `Rand.PushState()` and `Rand.PopState()`.
 - **Saves:** the mod adds no defs or game components, so nothing of it is written to a save.
 - **Patches:** there are no Harmony patches. The few private values it needs are read by reflection.
+- **Actions:** `POST` endpoints call the game's own code for orders, buttons and designators. Much of that
+  code expects a click, so `PlayerInputGuard` runs it with the acting thing selected, then restores the
+  player's selection, and closes or reports anything that would need them, such as a target or a window.
 
 ### Visibility
 

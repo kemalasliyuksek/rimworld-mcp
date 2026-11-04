@@ -25,6 +25,7 @@ The mod runs an HTTP server inside the game. These are the protections around it
 - **Software running as your user** can read the token file, just as it could read your saves or
   anything else you own. Treat that software as trusted, or do not run it alongside the game.
 - **Prompt injection through game content.** Names and descriptions come from mods and other players'
-  content, and they reach the assistant. The server tells assistants to treat them as data, but that
-  is a mitigation and not a guarantee. Being limited to observing during play, and to setup screens otherwise,
-  limits what an attack could achieve inside the game, but your assistant may have other tools, so review what it does as you normally would.
+  content, and they reach the assistant, which can also change the game. The server tells assistants to
+  treat them as data, but that is a mitigation and not a guarantee. Use your client's approval prompts,
+  and turn off the switches in the mod's settings for anything you do not want. Your assistant may have
+  other tools too, so review what it does as you normally would.

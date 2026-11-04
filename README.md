@@ -1,29 +1,50 @@
 # RimWorld MCP
 
-Give your AI assistant eyes on your colony.
+Talk to your colony. Let an AI assistant see it, understand it and, when you ask, run it.
 
 RimWorld MCP connects a running game of RimWorld to AI assistants through the
-[Model Context Protocol](https://modelcontextprotocol.io). Ask "what should I do next?" while you
-play, and the assistant looks at your actual colony before answering, with no screenshots and no
-describing your situation first.
+[Model Context Protocol](https://modelcontextprotocol.io). Ask "what should I do next?" while you play,
+and the assistant looks at your actual colony before answering, with no screenshots. Say "draft everyone
+and hold the east wall", "lay out a bedroom block and show me first" or "you play for a while", and it
+can do that too.
 
-> **Status: early development.** Version 0.1 observes the game and is developed on Linux with RimWorld 1.6.
-> Windows and macOS are expected to work but have not been tested yet.
+> **Status: early development.** Developed and tested on Linux with RimWorld 1.6. Windows and macOS are
+> expected to work but have not been tested yet.
 
-## What it can see
+## See everything you can see
 
 | Area | Examples |
 | --- | --- |
-| **Colony** | Date, weather, mood, days of food, alerts, unread letters |
-| **Your focus** | What you have selected, where the camera is, the event dialog in front of you and its choices |
+| **Colony** | Date, weather, mood, days of food, alerts, letters |
+| **Your focus** | What you have selected, where the camera is, the dialog in front of you and its choices |
 | **Pawns** | Skills, passions, traits, every mood thought, injuries, gear, work priorities, schedule, relations |
-| **Threats** | Enemies by faction and weapon, your fighters, turrets |
+| **Threats** | Enemies by faction and weapon, your fighters, armor, turrets |
 | **Base** | Rooms and their stats, power grids, crops, work benches and bills, beds, stockpiles |
 | **Map** | A text rendering of any area, and details of any cell |
 | **World** | Factions, quests, caravans, ideoligion, research, event history |
 | **Game data** | Every item, building, recipe and more, from the base game, DLCs and your active mods, with patches applied |
 
-See [docs/tools.md](docs/tools.md) for the full list.
+## Do anything you ask
+
+Everything here happens only when you ask. It runs in the background through the game's own code, so
+your mouse, keyboard, selection and windows stay yours, and you can do something else meanwhile.
+
+| Area | Examples |
+| --- | --- |
+| **Orders** | Draft, move, attack, and anything in a colonist's right-click menu or on a button, including what mods add |
+| **Building** | Everything on the Architect menu: build, mine, cut, make zones. Layouts can be drawn as plan marks for you to approve first |
+| **Running the colony** | Work priorities, schedules, research, bills, crops, stockpiles, allowed areas, outfit, drug and food policies |
+| **Events** | Answer dialogs and letters, trade, send caravans |
+| **Abilities** | Psycasts and any other ability, from the game, DLCs or mods |
+| **Playing for you** | Set the game speed and keep going until you say stop. It costs tokens and cannot react in real time, so it pauses to think |
+| **Cheats** | Spawn items and pawns, fire events, finish research, build instantly, edit anyone: name, skills, traits, needs, thoughts, health |
+| **Hidden information** | What is under the fog, only when you ask about it. It never mentions it otherwise |
+| **Game options** | RimWorld's settings, the mod list and mods' settings |
+
+Three switches in the mod's settings turn off actions, cheats and hidden information. Assistants cannot
+change them.
+
+See [docs/tools.md](docs/tools.md) for all the tools.
 
 ## Stop losing hours to the landing screen
 
@@ -32,47 +53,29 @@ river"*, or *"a mountain curved around open ground that is easy to defend, with 
 caves."* It searches the whole world, explains its favorite and moves your camera straight to it. You
 confirm by pressing Next.
 
-The mountain shapes come from the same noise the game uses to generate the map, so there is usually
-no need to reroll seeds at all.
+The mountain shapes come from the same noise the game uses to generate the map, so there is usually no
+need to reroll seeds. On the one map compared so far, the predicted rock matched at 99.6% of 3025
+sampled points.
 
-## Skip the ideoligion maze
+## Skip the setup maze
 
-Not sure what to pick? The assistant asks how you want to play, explains the options your game really
-offers, including those from mods, and can set the whole ideoligion up for you if you ask. It stays on
-screen for you to review before you press Next.
+- **Ideoligion:** the assistant asks how you want to play, explains the options your game really offers,
+  including those from mods, and can set the whole thing up.
+- **Colonists:** say what you need, such as *"keep Tsu, replace the others with a doctor and a good shot"*.
+  It generates candidates with the game's own generator until it finds a match, and can edit them if you
+  ask.
+- **The rest:** scenario, storyteller, difficulty, world settings and factions.
 
-## Build your crew by talking
+You review the result on screen and press Next yourself.
 
-Say what you need: *"keep Tsu, replace the others with a doctor and a good shot"*. The assistant reads
-every colonist on offer, generates candidates with the game's own generator until it finds a match, and
-can edit names, ages, backstories, traits, skills and passions if you ask. The changes appear on screen
-right away.
+## Works with your mods, safe for your save
 
-## Fair play by design
+Most tools use the game's own menus, buttons and data, so what mods add comes along with no code for
+them. The mod needs no other mods.
 
-During play, the bridge reports only what you can see yourself. Unexplored areas, invisible enemies
-and undiscovered diseases stay hidden, so the assistant is a knowledgeable friend looking over your
-shoulder and not a cheat.
-
-There is one deliberate exception, before a game begins: site search predicts the rock layout of a
-tile, as map preview mods do. It reveals nothing else about the map, such as ores or ruins.
-
-It never touches the code or files of the game or its mods, and it works in the background without
-touching your mouse, keyboard, selection or windows. If you ask, it can give orders during play, such as
-drafting colonists, moving them, and anything in their right-click menu or on their buttons, change work
-priorities and schedules, and use the Architect menu to build, mine or make zones. It can draw a layout as
-plan marks for you to approve before anything is built, choose research, add bills, answer events, set the
-game's speed, and play for you if you tell it to. If you ask for them, it can also cheat, such as spawning
-items, and tell you what is under the fog. It never does any of this unprompted. You can turn these off with the switches in the mod's settings.
-If you ask, it can also change your RimWorld settings, mod list and mods' settings. On the new game
-screens it can act for you if you ask: choose the scenario, storyteller and world settings, move the
-camera to a site, set up your ideoligion, or find and edit colonists. You still review the result and press Next yourself. Editing colonists can go beyond what
-the game normally allows, like other character editor mods, and only happens if you ask for it.
-
-## Safe for your save
-
-The mod adds no defs, no game components and no Harmony patches, and it needs no other mods. It
-leaves nothing in your save files, and you can add it to or remove it from an ongoing game.
+It adds no defs, no game components and no Harmony patches, and it never changes the files of the game
+or of other mods. You can add it to or remove it from an ongoing game. What it creates on request is
+ordinary game content, so it stays in your save like anything else you built.
 
 ## Installation
 
@@ -117,8 +120,7 @@ small separate process that translates between MCP and the mod. Read
 
 ## Roadmap
 
-Planned work is tracked in [docs/roadmap.md](docs/roadmap.md). The next big step is optional,
-player-approved actions.
+Planned work is tracked in [docs/roadmap.md](docs/roadmap.md).
 
 ## Contributing
 
