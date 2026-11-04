@@ -106,6 +106,7 @@ namespace RimWorldMcp.Bridge.Core
 
                 if (response == null)
                 {
+                    string method = request.HttpMethod;
                     string path = request.Url.AbsolutePath;
                     QueryParams query;
                     try
@@ -117,7 +118,7 @@ namespace RimWorldMcp.Bridge.Core
                         WriteResponse(context, BridgeResponse.Error(ex.StatusCode, ex.Code, ex.Message));
                         return;
                     }
-                    response = mainThread.Invoke(() => endpoints.Handle(path, query), RequestTimeout);
+                    response = mainThread.Invoke(() => endpoints.Handle(method, path, query), RequestTimeout);
                 }
                 WriteResponse(context, response);
             }

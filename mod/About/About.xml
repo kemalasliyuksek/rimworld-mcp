@@ -10,7 +10,9 @@
   </supportedVersions>
   <description>Lets AI assistants such as Claude Code see your running game through the Model Context Protocol, so you can ask "what should I do next?" and get an answer based on your actual colony.
 
-This version is strictly read-only: it observes and never changes the game. It only reports what you can see yourself, so unexplored areas and hidden information stay hidden.
+It can also find you a place to settle: describe what you want, and it searches the world, ranks tiles by the shape of their predicted mountains and moves the camera to its favorite.
+
+This version observes and never changes your game. During play it only reports what you can see yourself, so unexplored areas and hidden information stay hidden.
 
 It adds no defs and needs no other mods, leaves nothing in your save files, and can be added to or removed from an ongoing game.
 

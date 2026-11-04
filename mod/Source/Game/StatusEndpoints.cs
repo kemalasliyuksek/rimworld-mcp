@@ -14,6 +14,8 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("language", LanguageDatabase.activeLanguage?.folderName);
             json.Prop("game_loaded", Current.ProgramState == ProgramState.Playing && Current.Game != null);
             json.Prop("program_state", Current.ProgramState.ToString());
+            json.Prop("world_generated", Current.Game?.World != null);
+            json.Prop("on_site_selection_screen", Find.WindowStack != null && Find.WindowStack.IsOpen<Page_SelectStartingSite>());
             json.Prop("active_mods", LoadedModManager.RunningModsListForReading.Count);
             json.EndObject();
         }

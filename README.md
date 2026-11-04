@@ -7,7 +7,7 @@ RimWorld MCP connects a running game of RimWorld to AI assistants through the
 play, and the assistant looks at your actual colony before answering, with no screenshots and no
 describing your situation first.
 
-> **Status: early development.** Version 0.1 is read-only and developed on Linux with RimWorld 1.6.
+> **Status: early development.** Version 0.1 observes the game and is developed on Linux with RimWorld 1.6.
 > Windows and macOS are expected to work but have not been tested yet.
 
 ## What it can see
@@ -25,14 +25,27 @@ describing your situation first.
 
 See [docs/tools.md](docs/tools.md) for the full list.
 
+## Stop losing hours to the landing screen
+
+Tell the assistant what you want before you start, whatever it is: *"somewhere with caves and a
+river"*, or *"a mountain curved around open ground that is easy to defend, with crops all year and no
+caves."* It searches the whole world, explains its favorite and moves your camera straight to it. You
+confirm by pressing Next.
+
+The mountain shapes come from the same noise the game uses to generate the map, so there is usually
+no need to reroll seeds at all.
+
 ## Fair play by design
 
-The bridge reports only what you can see yourself. Unexplored areas, invisible enemies and
-undiscovered diseases stay hidden, so the assistant is a knowledgeable friend looking over your
+During play, the bridge reports only what you can see yourself. Unexplored areas, invisible enemies
+and undiscovered diseases stay hidden, so the assistant is a knowledgeable friend looking over your
 shoulder and not a cheat.
 
-Version 0.1 also cannot change anything. The bridge has no code path that writes to the game, and
-it rejects everything except read requests.
+There is one deliberate exception, before a game begins: site search predicts the rock layout of a
+tile, as map preview mods do. It reveals nothing else about the map, such as ores or ruins.
+
+Version 0.1 also cannot change your game. The only thing it can do is move the camera and the
+selection on the site selection screen, and you still confirm the choice yourself.
 
 ## Safe for your save
 

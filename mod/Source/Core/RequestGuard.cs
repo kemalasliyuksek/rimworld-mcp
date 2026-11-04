@@ -34,9 +34,9 @@ namespace RimWorldMcp.Bridge.Core
             {
                 return BridgeResponse.Error(401, "unauthorized", "Missing or invalid bearer token.");
             }
-            if (method != "GET")
+            if (method != "GET" && method != "POST")
             {
-                return BridgeResponse.Error(405, "method_not_allowed", "This version of the bridge is read-only.");
+                return BridgeResponse.Error(405, "method_not_allowed", "Only GET and POST are accepted.");
             }
             return null;
         }

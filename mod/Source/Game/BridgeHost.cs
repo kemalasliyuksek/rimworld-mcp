@@ -70,10 +70,14 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/map/cell", MapEndpoints.Cell);
             Register(endpoints, "/v1/defs/search", DefEndpoints.Search);
             Register(endpoints, "/v1/defs/get", DefEndpoints.Get);
+            Register(endpoints, "/v1/sites/world", SiteEndpoints.WorldSettings);
+            Register(endpoints, "/v1/sites/search", SiteEndpoints.Search);
+            Register(endpoints, "/v1/sites/get", SiteEndpoints.Get);
+            Register(endpoints, "/v1/sites/show", SiteEndpoints.Show, "POST");
             return endpoints;
         }
 
-        private static void Register(EndpointRegistry endpoints, string path, EndpointHandler handler)
+        private static void Register(EndpointRegistry endpoints, string path, EndpointHandler handler, string method = "GET")
         {
             endpoints.Register(path, (query, json) =>
             {
@@ -88,7 +92,7 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     Rand.PopState();
                 }
-            });
+            }, method);
         }
 
         private void Update()

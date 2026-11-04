@@ -4,8 +4,9 @@ const REQUEST_TIMEOUT_MS = 15_000;
 
 export type QueryValue = string | number | undefined;
 
-export interface BridgeReader {
+export interface BridgeConnection {
   get(path: string, params?: Record<string, QueryValue>): Promise<string>;
+  post(path: string, params?: Record<string, QueryValue>): Promise<string>;
 }
 
 /** An error the assistant can explain to the player, such as "no game is loaded". */
@@ -18,10 +19,22 @@ export class BridgeRequestError extends Error {
   }
 }
 
-export class BridgeClient implements BridgeReader {
+export class BridgeClient implements BridgeConnection {
   constructor(private readonly discoveryPath: string) {}
 
-  async get(path: string, params: Record<string, QueryValue> = {}): Promise<string> {
+  get(path: string, params: Record<string, QueryValue> = {}): Promise<string> {
+    return this.send("GET", path, params);
+  }
+
+  post(path: string, params: Record<string, QueryValue> = {}): Promise<string> {
+    return this.send("POST", path, params);
+  }
+
+  private async send(
+    method: "GET" | "POST",
+    path: string,
+    params: Record<string, QueryValue>,
+  ): Promise<string> {
     const location = await readDiscoveryFile(this.discoveryPath);
 
     const url = new URL(path, `http://127.0.0.1:${location.port}`);
@@ -34,6 +47,7 @@ export class BridgeClient implements BridgeReader {
     let response: Response;
     try {
       response = await fetch(url, {
+        method,
         headers: { Authorization: `Bearer ${location.token}` },
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });

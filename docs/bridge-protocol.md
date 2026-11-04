@@ -30,7 +30,7 @@ Host: 127.0.0.1:41234
 Authorization: Bearer <token>
 ```
 
-- Only `GET` is accepted.
+- All endpoints use `GET`, except `/v1/sites/show`, which uses `POST`.
 - `Host` must be exactly `127.0.0.1:<port>`.
 - Requests with an `Origin` header are rejected.
 
@@ -52,7 +52,7 @@ Failure looks like this:
 | 403 | `forbidden_host`, `forbidden_origin` |
 | 404 | `not_found`, `unknown_endpoint` |
 | 405 | `method_not_allowed` |
-| 409 | `no_game_loaded`, `no_map` |
+| 409 | `no_game_loaded`, `no_map`, `no_world`, `not_selecting_site` |
 | 429 | `too_many_requests` |
 | 500 | `internal_error` |
 | 503 | `game_busy`, `game_not_responding` |
@@ -78,3 +78,7 @@ Failure looks like this:
 | `/v1/map/cell` | `x`, `z`, `map` | `inspect_cell` |
 | `/v1/defs/search` | `q`, `type`, `limit` | `search_defs` |
 | `/v1/defs/get` | `def`, `type` | `get_def` |
+| `/v1/sites/world` | | `get_world_settings` |
+| `/v1/sites/search` | See `docs/tools.md` | `search_sites` |
+| `/v1/sites/get` | `tile` | `get_site` |
+| `POST /v1/sites/show` | `tile` | `show_site` |

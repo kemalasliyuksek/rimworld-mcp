@@ -1,7 +1,8 @@
 # Tools
 
-All tools are read-only. Those marked with `map` accept an optional map id and default to the map the
-player is looking at.
+All tools are read-only, except for `show_site`, which moves the camera and the selection on the site
+selection screen. Those marked with `map` accept an optional map id and default to the map the player
+is looking at.
 
 ## Situation
 
@@ -44,6 +45,42 @@ player is looking at.
 | `get_def` (`def`, `type`) | The full data of one definition, with mod patches applied. |
 | `list_mods` | Active mods in load order. |
 
+## Choosing a site
+
+These work before a game starts, once a world has been generated.
+
+| Tool | Purpose |
+| --- | --- |
+| `get_world_settings` | Seed, world settings, the selected tile, and how many tiles have each biome, hilliness and feature. |
+| `search_sites` (`biomes`, `hilliness`, `min_growing_days`, `min_coldest_c`, `max_hottest_c`, `min_rainfall`, `max_rainfall`, `max_diseases_per_year`, `caves`, `coast`, `lake`, `river`, `road`, `exclude_features`, `require_features`, `shape`, `min_pocket_score`, `min_rock_pct`, `max_rock_pct`, `limit`) | Finds tiles that match, optionally ranked by predicted mountain shape. Every condition is optional. |
+| `get_site` (`tile`) | Full details of a tile, with a text preview of its predicted mountains. |
+| `show_site` (`tile`) | Moves the camera to a tile and selects it. |
+
+Searches follow what the player asks for. For example, a sheltered, mild, all-year site with no hives:
+
+```json
+{
+  "hilliness": "SmallHills,LargeHills",
+  "min_growing_days": 60,
+  "min_coldest_c": -5,
+  "max_hottest_c": 38,
+  "caves": "exclude",
+  "lake": "exclude",
+  "coast": "exclude",
+  "shape": "crescent"
+}
+```
+
+Or a flat site next to water, with caves to explore:
+
+```json
+{
+  "hilliness": "Flat,SmallHills",
+  "caves": "require",
+  "river": "require"
+}
+```
+
 ## Connection
 
 | Tool | Purpose |
@@ -57,7 +94,9 @@ Failures come back as tool errors in the form `code: message`:
 | Code | Meaning |
 | --- | --- |
 | `game_not_connected` | The game is closed, or the mod is not active. |
-| `no_game_loaded` | The player is at the main menu. |
+| `no_game_loaded` | The player is at the main menu or still setting up a game. |
+| `no_world` | No world has been generated yet. |
+| `not_selecting_site` | `show_site` was called outside the site selection screen. |
 | `game_busy` | The game is loading or saving. Try again shortly. |
 | `game_not_responding` | The game's main thread did not answer in time. |
 | `not_found`, `bad_request` | The arguments do not match anything, or are invalid. |

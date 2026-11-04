@@ -8,9 +8,12 @@ These keep the project trustworthy and easy to maintain, so changes that break t
 accepted:
 
 1. **Show only what the player can see.** New data must respect fog of war, hidden conditions and
-   invisibility. Use the helpers in `mod/Source/Game/GameAccess.cs`.
-2. **Reading must not change the game.** No writes, no gameplay side effects, and no consumption of
-   the game's random numbers. All endpoints run inside `Rand.PushState()`.
+   invisibility. Use the helpers in `mod/Source/Game/GameAccess.cs`. The one exception is the
+   predicted rock layout in site search, before a game starts.
+2. **The bridge must not change the game.** No writes, no gameplay side effects, and no consumption
+   of the game's random numbers. All endpoints run inside `Rand.PushState()`. The only endpoint that
+   changes anything is `show_site`, which moves the camera and selection before a game starts.
+   Anything else that changes state belongs to the planned actions work, not to a read endpoint.
 3. **No save footprint.** Do not add defs, game components or anything else that ends up in a save.
 4. **No required third-party mods or libraries in the mod.** That includes Harmony. Use reflection
    for the occasional private field.
@@ -44,6 +47,9 @@ best way to find out how the game really works.
 1. Add a handler to the mod under `mod/Source/Game/` and register it in `BridgeHost.BuildEndpoints`.
 2. Add an entry to `server/src/tools.ts`.
 3. Document it in `docs/tools.md`.
+
+`MountainPredictor` mirrors `GenStep_ElevationFertility` and `TileMutatorWorker_Mountain`, including
+the order of their random calls. Check it against the decompiled game whenever RimWorld updates.
 
 Prefer compact, task-oriented results over dumping raw state, because every byte a tool returns
 uses up the assistant's context. Wrap data from other mods in `try`/`catch` where it could throw, so

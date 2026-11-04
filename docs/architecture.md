@@ -24,10 +24,11 @@ mod as well, but keeping it separate has real advantages:
 `Source/Core` has no game dependency, so it can be tested without RimWorld:
 
 - `BridgeServer` accepts HTTP requests on a background thread.
-- `RequestGuard` checks the token, `Host` and `Origin`, and allows only `GET`.
+- `RequestGuard` checks the token, `Host` and `Origin`, and allows only `GET` and `POST`.
 - `MainThreadQueue` passes each request to the main thread and waits for the answer.
 - `EndpointRegistry` routes requests and turns failures into JSON errors.
 - `JsonWriter` writes responses. The mod has no third-party dependencies.
+- `PocketAnalyzer` scores a rock grid for defensible crescents.
 
 `Source/Game` holds everything that touches the game:
 
@@ -63,6 +64,29 @@ skipped. Every new endpoint must follow the same rule.
 Recording events would normally need patches and a place to store them. The game already keeps its
 letters and messages in `Find.Archive` and saves them, so `get_recent_events` reads that instead. It
 needs no background recording, and it includes events from before the assistant connected.
+
+## Choosing a site
+
+Everything needed to compare tiles is in the world data, except for one thing: the shape of the
+mountains, which normally only exists once a map has been generated.
+
+The game derives the noise for a map from the world seed and the tile. `MountainPredictor` builds the
+same noise modules with the same random sequence as `GenStep_ElevationFertility` and
+`TileMutatorWorker_Mountain`, then samples the result at a low resolution without creating a map.
+
+Other tile features can also shape the terrain, such as valleys, cliffs and rivers. They are not
+modeled, and results for those tiles report `prediction_exact: false` and name the features.
+
+`PocketAnalyzer` then looks for a crescent. From each open spot it casts rays and asks which directions
+hit a wall of solid rock, then scores the spot highly when rock covers most directions, the gaps form
+one opening, and there is room to build. Spots near the map edge are skipped, and a wall that runs off
+the edge of the map does not count, because enemies arrive from there.
+
+Predicting a tile takes real time on the main thread, so a search visits the matching tiles in
+shuffled order until a time budget runs out, and reports how many it evaluated.
+
+Cave tunnels matter here too: `GenStep_CaveHives` places insect hives in them, in proportion to their
+size. A tile has tunnels only if it has a cave feature, so they can be filtered out exactly.
 
 ## The MCP server
 

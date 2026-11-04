@@ -6,6 +6,8 @@ export interface ToolDefinition {
   description: string;
   /** Bridge endpoint. The tool's arguments become its query string. */
   path: string;
+  /** Set for the rare tool that changes something. Everything else reads with GET. */
+  changesUiState?: true;
   inputSchema: z.ZodRawShape;
 }
 
@@ -15,6 +17,12 @@ const mapParam = z
   .min(0)
   .optional()
   .describe("Map id. Defaults to the map the player is currently looking at.");
+
+const presence = (what: string) =>
+  z
+    .enum(["any", "require", "exclude"])
+    .optional()
+    .describe(`Whether the tile must have, or must not have, ${what}. Defaults to any.`);
 
 export const tools: readonly ToolDefinition[] = [
   {
@@ -192,6 +200,79 @@ export const tools: readonly ToolDefinition[] = [
     description: "The mods running in the player's game, in load order.",
     path: "/v1/mods",
     inputSchema: {},
+  },
+  {
+    name: "get_world_settings",
+    title: "World settings",
+    description:
+      "Works before a game starts, on the world and site selection screens. Returns the seed and world settings, the selected tile, and how many tiles have each biome, hilliness and feature. Use the feature names here with search_sites.",
+    path: "/v1/sites/world",
+    inputSchema: {},
+  },
+  {
+    name: "search_sites",
+    title: "Find places to settle",
+    description:
+      'Searches the whole world for tiles that match what the player asks for, whatever that is, and works before a game starts. Every condition is optional. With shape "crescent" it predicts each tile\'s mountains from the world seed and ranks tiles by how well rock wraps around open ground with a single way in. min_rock_pct and max_rock_pct filter by how much of the map is predicted to be rock. Cave tunnels contain insect hives, which is worth mentioning when a player asks for caves. Do not suggest generating another world unless this finds nothing good.',
+    path: "/v1/sites/search",
+    inputSchema: {
+      biomes: z.string().optional().describe("Comma-separated biome defNames."),
+      hilliness: z
+        .string()
+        .optional()
+        .describe("Comma-separated subset of Flat, SmallHills, LargeHills, Mountainous."),
+      min_growing_days: z
+        .number()
+        .int()
+        .min(0)
+        .max(60)
+        .optional()
+        .describe("Outdoor growing days out of 60. 60 means crops grow all year."),
+      min_coldest_c: z.number().int().optional().describe("The coldest temperature must be at least this."),
+      max_hottest_c: z.number().int().optional().describe("The hottest temperature must be at most this."),
+      min_rainfall: z.number().int().min(0).optional().describe("Yearly rainfall in mm."),
+      max_rainfall: z.number().int().min(0).optional().describe("Yearly rainfall in mm."),
+      max_diseases_per_year: z.number().int().min(0).optional(),
+      caves: presence("cave tunnels, which contain insect hives"),
+      coast: presence("an ocean coast"),
+      lake: presence("a lake shore"),
+      river: presence("a river"),
+      road: presence("a road"),
+      exclude_features: z
+        .string()
+        .optional()
+        .describe("Comma-separated feature defNames to avoid, from get_world_settings."),
+      require_features: z
+        .string()
+        .optional()
+        .describe("Comma-separated feature defNames that must all be present."),
+      shape: z.literal("crescent").optional().describe("Rank by predicted mountain shape."),
+      min_rock_pct: z.number().int().min(0).max(100).optional().describe("Predicted share of the map that is rock."),
+      max_rock_pct: z.number().int().min(0).max(100).optional().describe("Predicted share of the map that is rock."),
+      min_pocket_score: z.number().int().min(0).max(100).optional(),
+      limit: z.number().int().min(1).max(20).optional().describe("Defaults to 8."),
+    },
+  },
+  {
+    name: "get_site",
+    title: "Site details",
+    description:
+      "Full details of one tile, defaulting to the one selected in the game, with a text preview of its predicted mountains so you can judge the shape yourself. The preview is a prediction and shows no caves, ores or ruins.",
+    path: "/v1/sites/get",
+    inputSchema: {
+      tile: z.number().int().min(0).optional().describe("Tile id from search_sites."),
+    },
+  },
+  {
+    name: "show_site",
+    title: "Show site in game",
+    description:
+      "On the site selection screen, moves the player's camera to a tile and selects it, so they can see it without hunting for it on the globe. It changes nothing else, and the player still confirms the choice themselves. Call it for the site you recommend.",
+    path: "/v1/sites/show",
+    changesUiState: true,
+    inputSchema: {
+      tile: z.number().int().min(0).describe("Tile id from search_sites."),
+    },
   },
   {
     name: "get_game_status",

@@ -48,12 +48,20 @@ namespace RimWorldMcp.Bridge.Tests
         }
 
         [Theory]
-        [InlineData("POST")]
         [InlineData("PUT")]
+        [InlineData("PATCH")]
         [InlineData("DELETE")]
-        public void TheBridgeIsReadOnly(string method)
+        public void OnlyGetAndPostAreAccepted(string method)
         {
             Assert.Equal(405, guard.Check(method, GoodHost, null, GoodAuth).StatusCode);
+        }
+
+        [Fact]
+        public void PostNeedsTheSameCredentialsAsGet()
+        {
+            Assert.Null(guard.Check("POST", GoodHost, null, GoodAuth));
+            Assert.Equal(401, guard.Check("POST", GoodHost, null, null).StatusCode);
+            Assert.Equal(403, guard.Check("POST", GoodHost, "https://evil.example.com", GoodAuth).StatusCode);
         }
 
         [Fact]

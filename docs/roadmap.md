@@ -6,6 +6,9 @@ Plans can change. Feedback and ideas are welcome in the issues.
 
 - [x] Live colony, pawn, threat, base, world and map data
 - [x] Game data search across the base game, DLCs and active mods
+- [x] Site search with predicted mountain shapes
+- [ ] Model more of the tile features that shape terrain, such as valleys and cliffs
+- [ ] Show predicted water and cave tunnels in the site preview, not just rock
 - [ ] Test on Windows and macOS
 - [ ] Steam Workshop release
 - [ ] Package the MCP server for one-command installation

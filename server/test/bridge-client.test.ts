@@ -55,6 +55,14 @@ describe("BridgeClient", () => {
     expect(url.searchParams.has("type")).toBe(false);
   });
 
+  it("sends post requests with the POST method and the token", async () => {
+    await new BridgeClient(discoveryPath).post("/v1/sites/show", { tile: 7 });
+
+    expect(lastRequest?.method).toBe("POST");
+    expect(lastRequest?.headers.authorization).toBe("Bearer secret");
+    expect(new URL(lastRequest?.url ?? "", "http://localhost").searchParams.get("tile")).toBe("7");
+  });
+
   it("turns bridge errors into coded errors", async () => {
     respond = (response) => {
       response.statusCode = 409;

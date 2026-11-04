@@ -1,17 +1,22 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { beforeEach, describe, expect, it } from "vitest";
-import { BridgeRequestError, type BridgeReader, type QueryValue } from "../src/bridge-client.js";
+import { BridgeRequestError, type BridgeConnection, type QueryValue } from "../src/bridge-client.js";
 import { BridgeNotFoundError } from "../src/discovery.js";
 import { createServer } from "../src/server.js";
 import { tools } from "../src/tools.js";
 
-class FakeBridge implements BridgeReader {
-  calls: { path: string; params: Record<string, QueryValue> | undefined }[] = [];
+class FakeBridge implements BridgeConnection {
+  calls: { method: string; path: string; params: Record<string, QueryValue> | undefined }[] = [];
   next: () => Promise<string> = () => Promise.resolve('{"ok":true}');
 
   get(path: string, params?: Record<string, QueryValue>): Promise<string> {
-    this.calls.push({ path, params });
+    this.calls.push({ method: "GET", path, params });
+    return this.next();
+  }
+
+  post(path: string, params?: Record<string, QueryValue>): Promise<string> {
+    this.calls.push({ method: "POST", path, params });
     return this.next();
   }
 }
@@ -28,12 +33,12 @@ describe("MCP server", () => {
     await client.connect(clientTransport);
   });
 
-  it("offers every tool, and all of them declare they are read-only", async () => {
+  it("offers every tool, and only show_site is not read-only", async () => {
     const { tools: listed } = await client.listTools();
 
     expect(listed.map((t) => t.name).sort()).toEqual(tools.map((t) => t.name).sort());
     for (const tool of listed) {
-      expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
+      expect(tool.annotations?.readOnlyHint, tool.name).toBe(tool.name !== "show_site");
       expect(tool.annotations?.destructiveHint, tool.name).toBe(false);
       expect(tool.description, tool.name).toBeTruthy();
     }
@@ -50,10 +55,20 @@ describe("MCP server", () => {
     });
 
     expect(bridge.calls).toEqual([
-      { path: "/v1/pawns", params: { group: "prisoners", limit: 5 } },
+      { method: "GET", path: "/v1/pawns", params: { group: "prisoners", limit: 5 } },
     ]);
     expect(result.isError).toBeFalsy();
     expect(result.content).toEqual([{ type: "text", text: '{"ok":true}' }]);
+  });
+
+  it("sends show_site as a POST, and every other tool as a GET", async () => {
+    await client.callTool({ name: "show_site", arguments: { tile: 42 } });
+    await client.callTool({ name: "search_sites", arguments: { caves: "exclude", shape: "crescent" } });
+
+    expect(bridge.calls).toEqual([
+      { method: "POST", path: "/v1/sites/show", params: { tile: 42 } },
+      { method: "GET", path: "/v1/sites/search", params: { caves: "exclude", shape: "crescent" } },
+    ]);
   });
 
   it("rejects arguments that fail validation without calling the game", async () => {
