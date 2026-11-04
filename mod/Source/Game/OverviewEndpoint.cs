@@ -181,14 +181,20 @@ namespace RimWorldMcp.Bridge.Game
             json.EndArray();
         }
 
+        private static float NutritionOf(IEnumerable<Thing> items)
+        {
+            return items.Sum(t => t.def.GetStatValueAbstract(StatDefOf.Nutrition) * t.stackCount);
+        }
+
         private static void WriteFood(JsonWriter json, Map map)
         {
             float stored = map.resourceCounter.TotalHumanEdibleNutrition;
             // The same conditions as the game's resource counter, apart from being in storage.
-            float onGround = GameAccess.VisibleUnstoredItems(map)
-                .Where(t => t.def.CountAsResource && t.def.IsNutritionGivingIngestible && t.def.ingestible.HumanEdible
-                    && !t.IsNotFresh() && !t.IsForbidden(Faction.OfPlayer))
-                .Sum(t => t.def.GetStatValueAbstract(StatDefOf.Nutrition) * t.stackCount);
+            List<Thing> edible = GameAccess.VisibleUnstoredItems(map)
+                .Where(t => t.def.CountAsResource && t.def.IsNutritionGivingIngestible && t.def.ingestible.HumanEdible && !t.IsNotFresh())
+                .ToList();
+            float forbidden = NutritionOf(edible.Where(t => t.IsForbidden(Faction.OfPlayer)));
+            float onGround = NutritionOf(edible) - forbidden;
             float perDay = map.mapPawns.FreeColonistsAndPrisonersSpawned
                 .Where(p => p.needs?.food != null)
                 .Sum(p => p.needs.food.FoodFallPerTickAssumingCategory(HungerCategory.Fed, ignoreMalnutrition: true) * GameAccess.TicksPerDay);
@@ -196,6 +202,8 @@ namespace RimWorldMcp.Bridge.Game
             json.Key("food").BeginObject();
             json.Prop("stored_nutrition", stored);
             json.Prop("on_ground_nutrition", onGround);
+            // Nobody eats forbidden food until the player allows it, which a new colony's supplies need.
+            json.Prop("forbidden_nutrition", forbidden);
             json.Prop("human_nutrition_per_day", perDay);
             if (perDay > 0f)
             {

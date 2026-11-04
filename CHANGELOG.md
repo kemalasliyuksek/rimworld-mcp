@@ -24,7 +24,8 @@ All notable changes to this project are documented here. The format is based on
 - Pawn relations now follow the game's social tab: implied relations such as siblings are included, and
   relatives the player has not met are left out.
 - Visible items outside storage in `get_resources`, and counted in the overview's days of food, since
-  a new colony's supplies are not in storage yet.
+  a new colony's supplies are not in storage yet. Forbidden items are marked, and forbidden food is
+  reported separately because nobody eats it until the player allows it.
 
 ### Changed
 
