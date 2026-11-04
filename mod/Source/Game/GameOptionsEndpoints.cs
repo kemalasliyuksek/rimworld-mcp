@@ -247,6 +247,10 @@ namespace RimWorldMcp.Bridge.Game
         public static void SetModSettings(QueryParams query, JsonWriter json)
         {
             (Mod handle, object settings) = ResolveModSettings(query);
+            if (handle is McpMod)
+            {
+                throw new BridgeException(403, "permission_disabled", "These switches decide what assistants may do, so only the player can change them, in the game's mod settings.");
+            }
             foreach ((FieldInfo field, object value) in ParseChanges(settings, query))
             {
                 field.SetValue(settings, value);

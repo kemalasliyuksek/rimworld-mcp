@@ -62,6 +62,12 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/pawn", PawnEndpoints.Detail);
             Register(endpoints, "/v1/pawn/work", WorkEndpoints.SetPriorities, "POST");
             Register(endpoints, "/v1/pawn/schedule", WorkEndpoints.SetSchedule, "POST");
+            Register(endpoints, "/v1/orders/draft", OrderEndpoints.SetDrafted, "POST");
+            Register(endpoints, "/v1/orders/move", OrderEndpoints.Move, "POST");
+            Register(endpoints, "/v1/orders", OrderEndpoints.ListOrders);
+            Register(endpoints, "/v1/orders/give", OrderEndpoints.GiveOrder, "POST");
+            Register(endpoints, "/v1/gizmos", OrderEndpoints.ListGizmos);
+            Register(endpoints, "/v1/gizmos/use", OrderEndpoints.UseGizmo, "POST");
             Register(endpoints, "/v1/threats", ThreatEndpoint.Threats);
             Register(endpoints, "/v1/resources", ResourceEndpoint.Resources);
             Register(endpoints, "/v1/base", BaseEndpoint.Base);
@@ -92,14 +98,23 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/starting-pawns", StartingPawnEndpoints.List);
             Register(endpoints, "/v1/starting-pawns/find", StartingPawnEndpoints.FindCandidate, "POST");
             Register(endpoints, "/v1/starting-pawns/swap", StartingPawnEndpoints.Swap, "POST");
-            Register(endpoints, "/v1/starting-pawns/edit", StartingPawnEndpoints.Edit, "POST");
+            Register(endpoints, "/v1/starting-pawns/edit", StartingPawnEndpoints.Edit, "POST", isCheat: true);
             return endpoints;
         }
 
-        private static void Register(EndpointRegistry endpoints, string path, EndpointHandler handler, string method = "GET")
+        private static void Register(EndpointRegistry endpoints, string path, EndpointHandler handler, string method = "GET", bool isCheat = false)
         {
             endpoints.Register(path, (query, json) =>
             {
+                if (method == "POST" && !McpMod.Settings.allowActions)
+                {
+                    throw new PermissionDisabledException("Actions");
+                }
+                if (isCheat && !McpMod.Settings.allowCheats)
+                {
+                    throw new PermissionDisabledException("Cheats");
+                }
+
                 // Some game getters consume random numbers. Observing must never alter the
                 // sequence that the simulation sees.
                 Rand.PushState();

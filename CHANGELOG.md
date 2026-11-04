@@ -9,7 +9,7 @@ All notable changes to this project are documented here. The format is based on
 ### Added
 
 - RimWorld 1.6 bridge mod with a local, token-protected HTTP API that cannot change the game's code or files.
-- MCP server with 40 tools covering the colony, the player's focus, pawns, threats, resources, the
+- MCP server with 46 tools covering the colony, the player's focus, pawns, threats, resources, the
   base, research, events, the world, the map, game data and mods.
 - Scenario, storyteller, difficulty and world settings tools on the first new game screens, on the
   player's request.
@@ -28,6 +28,9 @@ All notable changes to this project are documented here. The format is based on
   reported separately because nobody eats it until the player allows it.
 - Work priorities and schedules can be changed during play, on the player's request, and `get_pawn`
   reports whether manual priorities are on.
+- Orders on the player's request: drafting, moving, and anything in a colonist's right-click menu or on
+  the buttons of a pawn or building, including what mods add.
+- Switches in the mod's settings for actions, cheats and hidden information.
 
 ### Changed
 

@@ -6,7 +6,7 @@ export interface ToolDefinition {
   description: string;
   /** Bridge endpoint. The tool's arguments become its query string. */
   path: string;
-  /** Set for the rare tool that acts on the player's request. Everything else reads with GET. */
+  /** Set for a tool that acts on the player's request. Everything else reads with GET. */
   acts?: true;
   /** The endpoint returns an image in image_png_base64, sent on to the assistant as an image. */
   returnsImage?: true;
@@ -117,6 +117,83 @@ export const tools: readonly ToolDefinition[] = [
         .string()
         .min(1)
         .describe("Activities with a range of hours, up to but not including the last, for example Sleep:22-6,Joy:20-22,Work:6-20. The activities are Anything, Work, Joy and Sleep, plus Meditate with Royalty."),
+    },
+  },
+  {
+    name: "set_drafted",
+    title: "Draft or undraft",
+    description:
+      "Only when the player asks. Drafts or releases colonists and sets whether they fire at will. Failures are reported per colonist.",
+    path: "/v1/orders/draft",
+    acts: true,
+    inputSchema: {
+      pawns: z.string().min(1).describe("Comma-separated pawn ids or names."),
+      drafted: z.enum(["true", "false"]).optional(),
+      fire_at_will: z.enum(["true", "false"]).optional().describe("False holds fire until they are ordered to attack."),
+    },
+  },
+  {
+    name: "move_pawns",
+    title: "Move colonists",
+    description:
+      "Only when the player asks. Drafts colonists and sends them to a cell, like the game's go-here order. A group spreads out around it, and the result says where each one is going. To place each one exactly, for example behind cover, call this once per colonist. Read view_map first to choose cells.",
+    path: "/v1/orders/move",
+    acts: true,
+    inputSchema: {
+      pawns: z.string().min(1).describe("Comma-separated pawn ids or names."),
+      x: z.number().int().min(0),
+      z: z.number().int().min(0),
+    },
+  },
+  {
+    name: "list_pawn_orders",
+    title: "Orders on a cell",
+    description:
+      "What the game's right-click menu offers a colonist on a cell, including what mods add: attack, tend, build, haul, rescue, prioritize and more. Being drafted changes what is offered. Works for colonists on the map the player is looking at.",
+    path: "/v1/orders",
+    inputSchema: {
+      pawn: z.string().min(1).describe("Pawn id or name."),
+      x: z.number().int().min(0),
+      z: z.number().int().min(0),
+    },
+  },
+  {
+    name: "give_pawn_order",
+    title: "Give an order",
+    description:
+      "Only when the player asks. Chooses an order from list_pawn_orders for each colonist, with no use of the mouse. Failures are reported per colonist. If done is false, the order needed something on screen, such as a target or a further menu, so it did not go through and the player has to give it, and needs_player says why.",
+    path: "/v1/orders/give",
+    acts: true,
+    inputSchema: {
+      pawns: z.string().min(1).describe("Comma-separated pawn ids or names."),
+      x: z.number().int().min(0),
+      z: z.number().int().min(0),
+      order: z.string().min(1).describe("The order's text, exactly as list_pawn_orders gives it. For several colonists, check that each one is offered it, since the text can name the colonist."),
+    },
+  },
+  {
+    name: "list_gizmos",
+    title: "Buttons of a thing",
+    description:
+      "The buttons the game shows when a pawn or building is selected, including those from mods. usable false means the button only works by hand. Get thing ids from inspect_cell or list_pawns.",
+    path: "/v1/gizmos",
+    inputSchema: {
+      thing: z.string().min(1).describe("Thing id, or a pawn's name."),
+    },
+  },
+  {
+    name: "use_gizmo",
+    title: "Press a button",
+    description:
+      "Only when the player asks. Presses a button from list_gizmos, with no use of the mouse. Buttons of kind target also need a target: x and z, or another thing. If done is false, it needed something on screen, so it did not fully go through and the player has to do it, and needs_player says why.",
+    path: "/v1/gizmos/use",
+    acts: true,
+    inputSchema: {
+      thing: z.string().min(1).describe("Thing id, or a pawn's name."),
+      button: z.string().min(1).describe("The button's text, exactly as list_gizmos gives it."),
+      x: z.number().int().min(0).optional(),
+      z: z.number().int().min(0).optional(),
+      target: z.string().min(1).optional().describe("Thing id of the target, instead of x and z."),
     },
   },
   {

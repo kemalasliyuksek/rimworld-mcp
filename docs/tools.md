@@ -2,7 +2,8 @@
 
 All tools are read-only, except for those marked as acting on request: `configure_new_game`, `show_site`,
 `set_start_options`, `configure_ideo`, `find_starting_pawn`, `swap_starting_pawns`, `edit_starting_pawn`,
-`set_game_settings`, `configure_mods`, `set_mod_settings`, `set_work_priorities` and `set_schedule`. Those marked with `map` accept an optional map id and default to the map the player
+`set_game_settings`, `configure_mods`, `set_mod_settings`, `set_work_priorities`, `set_schedule`,
+`set_drafted`, `move_pawns`, `give_pawn_order` and `use_gizmo`. The mod's settings can turn acting tools off. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -22,6 +23,12 @@ is looking at.
 | `get_pawn` (`id`) | Full details for one pawn, by id or name. |
 | `set_work_priorities` (`pawn`, `priorities`, `manual_priorities`) | Changes settings on the game's Work tab. Only when the player asks. |
 | `set_schedule` (`pawn`, `hours`) | Changes hours on the game's Schedule tab. Only when the player asks. |
+| `set_drafted` (`pawns`, `drafted`, `fire_at_will`) | Drafts or releases colonists. Only when the player asks. |
+| `move_pawns` (`pawns`, `x`, `z`) | Drafts colonists and sends them to a cell. Only when the player asks. |
+| `list_pawn_orders` (`pawn`, `x`, `z`) | What the right-click menu offers a colonist on a cell, including what mods add. |
+| `give_pawn_order` (`pawns`, `x`, `z`, `order`) | Chooses one of those orders. Only when the player asks. |
+| `list_gizmos` (`thing`) | The buttons of a selected pawn or building, including those from mods. |
+| `use_gizmo` (`thing`, `button`, `x`, `z`, `target`) | Presses one of those buttons. Only when the player asks. |
 
 ## Colony
 

@@ -13,7 +13,9 @@ anything RimWorld allows, cheats included, but only when the player asks; hidden
 they ask about it; removing the mod must not break a save; and it must run without trouble with no mods
 or with many.
 
-Keep Unity-specific code in `BridgeBootstrap`, `BridgeHost` and `IconSheet`.
+Keep Unity-specific code in `BridgeBootstrap`, `BridgeHost`, `IconSheet` and the settings window in `McpMod`.
+
+Run game code meant for a click through `PlayerInputGuard`, which keeps it from disturbing the player.
 
 `MountainPredictor` must stay in step with the game's map generation, down to the order of its random
 calls. Recheck it against `.decompiled/game` after any game update.

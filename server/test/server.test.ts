@@ -52,6 +52,10 @@ describe("MCP server", () => {
           "set_mod_settings",
           "set_work_priorities",
           "set_schedule",
+          "set_drafted",
+          "move_pawns",
+          "give_pawn_order",
+          "use_gizmo",
         ].includes(tool.name),
       );
       expect(tool.annotations?.destructiveHint, tool.name).toBe(false);

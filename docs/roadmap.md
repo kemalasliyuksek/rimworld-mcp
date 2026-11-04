@@ -30,7 +30,8 @@ Plans can change. Feedback and ideas are welcome in the issues.
 Everything a player can do, and everything cheats can do, always on the player's request.
 
 - [x] Work priorities and schedules
-- [ ] Orders for pawns, such as drafting, moving, attacking and working on a target
+- [x] Switches in the mod's settings for actions, cheats and hidden information
+- [x] Orders for pawns, such as drafting, moving, attacking and working on a target
 - [ ] Building and plans, including laying out a whole base as plan lines for the player to approve
 - [ ] Research, bills, zones, trade, caravans and dialog choices
 - [ ] Game speed, so that an assistant can play for the player when asked

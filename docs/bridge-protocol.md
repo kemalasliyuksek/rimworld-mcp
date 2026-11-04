@@ -70,6 +70,12 @@ Failure looks like this:
 | `/v1/pawn` | `id` | `get_pawn` |
 | `POST /v1/pawn/work` | `pawn`, `priorities`, `manual_priorities` | `set_work_priorities` |
 | `POST /v1/pawn/schedule` | `pawn`, `hours` | `set_schedule` |
+| `POST /v1/orders/draft` | `pawns`, `drafted`, `fire_at_will` | `set_drafted` |
+| `POST /v1/orders/move` | `pawns`, `x`, `z` | `move_pawns` |
+| `/v1/orders` | `pawn`, `x`, `z` | `list_pawn_orders` |
+| `POST /v1/orders/give` | `pawns`, `x`, `z`, `order` | `give_pawn_order` |
+| `/v1/gizmos` | `thing` | `list_gizmos` |
+| `POST /v1/gizmos/use` | `thing`, `button`, `x`, `z`, `target` | `use_gizmo` |
 | `/v1/threats` | `map` | `get_threats` |
 | `/v1/resources` | `map` | `get_resources` |
 | `/v1/base` | `sections`, `map` | `get_base` |

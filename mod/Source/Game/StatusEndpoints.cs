@@ -18,6 +18,11 @@ namespace RimWorldMcp.Bridge.Game
             json.Prop("world_generated", Current.Game?.World != null);
             json.Prop("on_site_selection_screen", Find.WindowStack != null && Find.WindowStack.IsOpen<Page_SelectStartingSite>());
             json.Prop("active_mods", LoadedModManager.RunningModsListForReading.Count);
+            json.Key("permissions").BeginObject();
+            json.Prop("actions", McpMod.Settings.allowActions);
+            json.Prop("cheats", McpMod.Settings.allowCheats);
+            json.Prop("hidden_information", McpMod.Settings.allowHiddenInformation);
+            json.EndObject();
             json.Key("open_windows").BeginArray();
             if (Find.WindowStack != null)
             {

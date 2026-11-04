@@ -25,6 +25,14 @@ namespace RimWorldMcp.Bridge.Core
         }
     }
 
+    public sealed class PermissionDisabledException : BridgeException
+    {
+        public PermissionDisabledException(string switchName)
+            : base(403, "permission_disabled", $"The player has turned off '{switchName}' in this mod's settings. Only the player can turn it back on.")
+        {
+        }
+    }
+
     public sealed class NotFoundException : BridgeException
     {
         public NotFoundException(string message)
