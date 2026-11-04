@@ -69,6 +69,9 @@ in the default Steam location, set `RIMWORLD_DIR` first.
 Then:
 
 1. Start RimWorld, enable **RimWorld MCP** in the mod list and restart the game when asked.
+   Turn on **Run in background** in the game's options too. Otherwise the game stops when you switch
+   to your assistant, and it cannot answer. With it on, the game keeps running while you are away, so
+   pause before you switch.
 2. Register the server with your assistant. For [Claude Code](https://claude.com/claude-code):
 
    ```bash

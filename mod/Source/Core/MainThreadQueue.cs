@@ -50,7 +50,7 @@ namespace RimWorldMcp.Bridge.Core
                 item.Done.Wait();
                 return item.Response;
             }
-            return BridgeResponse.Error(503, "game_not_responding", "The game did not respond in time. It may be frozen or still starting.");
+            return BridgeResponse.Error(503, "game_not_responding", "The game did not respond in time. Its window may be in the background with \"Run in background\" turned off in the game's options, which stops the game. It may also be frozen or still starting.");
         }
 
         /// <summary>Runs queued work. Only ever call this from the main thread.</summary>

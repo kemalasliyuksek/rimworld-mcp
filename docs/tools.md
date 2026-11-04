@@ -98,5 +98,5 @@ Failures come back as tool errors in the form `code: message`:
 | `no_world` | No world has been generated yet. |
 | `not_selecting_site` | `show_site` was called outside the site selection screen. |
 | `game_busy` | The game is loading or saving. Try again shortly. |
-| `game_not_responding` | The game's main thread did not answer in time. |
+| `game_not_responding` | The game's main thread did not answer in time, usually because the window is in the background with "Run in background" turned off. |
 | `not_found`, `bad_request` | The arguments do not match anything, or are invalid. |
