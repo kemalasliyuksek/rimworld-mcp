@@ -93,6 +93,13 @@ namespace RimWorldMcp.Bridge.Game
             Register(endpoints, "/v1/trade/deal", ManagementEndpoints.Trade, "POST");
             Register(endpoints, "/v1/caravans/form", ManagementEndpoints.FormCaravan, "POST");
             Register(endpoints, "/v1/caravans/send", ManagementEndpoints.SendCaravan, "POST");
+            Register(endpoints, "/v1/abilities", AbilityEndpoints.List);
+            Register(endpoints, "/v1/abilities/use", AbilityEndpoints.Use, "POST");
+            Register(endpoints, "/v1/colony/bills/edit", PolicyEndpoints.EditBill, "POST");
+            Register(endpoints, "/v1/policies/create", PolicyEndpoints.CreatePolicy, "POST");
+            Register(endpoints, "/v1/policies/edit", PolicyEndpoints.EditPolicy, "POST");
+            Register(endpoints, "/v1/policies/delete", PolicyEndpoints.DeletePolicy, "POST");
+            Register(endpoints, "/v1/areas/set", PolicyEndpoints.SetArea, "POST");
             Register(endpoints, "/v1/cheats/spawn-thing", CheatEndpoints.SpawnThing, "POST", isCheat: true);
             Register(endpoints, "/v1/cheats/spawn-pawn", CheatEndpoints.SpawnPawn, "POST", isCheat: true);
             Register(endpoints, "/v1/cheats/incident", CheatEndpoints.TriggerIncident, "POST", isCheat: true);

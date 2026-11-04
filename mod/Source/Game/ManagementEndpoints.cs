@@ -36,7 +36,7 @@ namespace RimWorldMcp.Bridge.Game
             json.EndArray();
         }
 
-        private static T ResolveEnum<T>(string text, string what)
+        internal static T ResolveEnum<T>(string text, string what)
             where T : struct
         {
             if (Enum.TryParse(text, ignoreCase: true, out T value) && Enum.IsDefined(typeof(T), value))
@@ -169,7 +169,7 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
-        private static Action<ThingFilter> FilterChange(string name, bool allow)
+        internal static Action<ThingFilter> FilterChange(string name, bool allow)
         {
             ThingCategoryDef category = DefDatabase<ThingCategoryDef>.GetNamedSilentFail(name);
             if (category != null)

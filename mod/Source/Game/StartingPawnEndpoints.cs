@@ -511,6 +511,8 @@ namespace RimWorldMcp.Bridge.Game
             private readonly List<(HediffDef Condition, float? Severity)> addedConditions = new List<(HediffDef, float?)>();
             private readonly List<HediffDef> removedConditions = new List<HediffDef>();
             private MentalStateDef mentalState;
+            private readonly List<AbilityDef> addedAbilities = new List<AbilityDef>();
+            private readonly List<AbilityDef> removedAbilities = new List<AbilityDef>();
             private Gender? gender;
             private HairDef hair;
             private BeardDef beard;
@@ -689,6 +691,13 @@ namespace RimWorldMcp.Bridge.Game
                 }
                 removedConditions.AddRange(query.GetList("remove_conditions").Select(ResolveStyleDef<HediffDef>));
 
+                addedAbilities.AddRange(query.GetList("add_abilities").Select(ResolveStyleDef<AbilityDef>));
+                removedAbilities.AddRange(query.GetList("remove_abilities").Select(ResolveStyleDef<AbilityDef>));
+                if ((addedAbilities.Count > 0 || removedAbilities.Count > 0) && pawn.abilities == null)
+                {
+                    throw new BadRequestException($"{pawn.LabelShort} cannot have abilities.");
+                }
+
                 mentalState = ResolveStyleDef<MentalStateDef>(query.GetString("mental_state"));
                 if (mentalState != null && pawn.mindState == null)
                 {
@@ -727,6 +736,8 @@ namespace RimWorldMcp.Bridge.Game
                 {
                     pawn.needs.TryGetNeed(need).CurLevelPercentage = percent / 100f;
                 }
+                addedAbilities.ForEach(pawn.abilities.GainAbility);
+                removedAbilities.ForEach(pawn.abilities.RemoveAbility);
                 if (mentalState != null)
                 {
                     pawn.mindState.mentalStateHandler.TryStartMentalState(mentalState, forced: true);

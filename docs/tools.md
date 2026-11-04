@@ -3,7 +3,7 @@
 All tools are read-only, except for those marked as acting on request: `configure_new_game`, `show_site`,
 `set_start_options`, `configure_ideo`, `find_starting_pawn`, `swap_starting_pawns`, `edit_starting_pawn`,
 `set_game_settings`, `configure_mods`, `set_mod_settings`, `set_work_priorities`, `set_schedule`,
-`set_drafted`, `move_pawns`, `attack_target`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan`, `remove_plan`, `set_game_speed`, `set_research`, `add_bill`, `remove_bill`, `set_crop`, `answer_dialog`, `answer_letter`, `set_pawn_policies`, `set_stockpile`, `trade`, `form_caravan`, `send_caravan`, and the cheats below. The mod's settings can turn acting tools, cheats and hidden information off. Those marked with `map` accept an optional map id and default to the map the player
+`set_drafted`, `move_pawns`, `attack_target`, `give_pawn_order`, `use_gizmo`, `use_designator`, `draw_plan`, `remove_plan`, `set_game_speed`, `set_research`, `add_bill`, `remove_bill`, `set_crop`, `answer_dialog`, `answer_letter`, `set_pawn_policies`, `set_stockpile`, `trade`, `form_caravan`, `send_caravan`, `use_ability`, `edit_bill`, `create_policy`, `edit_policy`, `delete_policy`, `set_area`, and the cheats below. The mod's settings can turn acting tools, cheats and hidden information off. Those marked with `map` accept an optional map id and default to the map the player
 is looking at.
 
 ## Situation
@@ -74,6 +74,11 @@ Cells are parts separated by semicolons: a cell (`10,20`), a filled rectangle (`
 | `trade` (`trader`, `negotiator`, `deal`) | Makes a deal at once. Only when the player asks. |
 | `form_caravan` (`pawns`, `items`, `tile`) | Has colonists pack and leave. Only when the player asks. |
 | `send_caravan` (`caravan`, `tile`) | Sends a caravan to a world tile. Only when the player asks. |
+| `list_abilities` (`pawn`) | A pawn's psycasts and abilities, and what stops them. |
+| `use_ability` (`pawn`, `ability`, `target`, `x`, `z`, `tile`, `confirm`) | Uses one. Only when the player asks. |
+| `edit_bill` (`thing`, `index`, and the bill's settings) | Changes a bill. Only when the player asks. |
+| `create_policy`, `edit_policy`, `delete_policy` (`kind`, `policy`, and settings) | Manage outfit, drug and food policies. Only when the player asks. |
+| `set_area` (`area`, `add`, `remove`, `rename`, `delete`, `map`) | Creates and changes allowed areas. Only when the player asks. |
 
 ## Cheats
 
@@ -165,7 +170,7 @@ Or a flat site next to water, with caves to explore:
 | `get_starting_pawns` | Every colonist on offer, in full, and essential work nobody selected can do. Relations follow the game's social tab, and relatives the player has not met appear only as a count. |
 | `find_starting_pawn` (`index`, `gender`, `min_age`, `max_age`, `min_skills`, `passions`, `require_traits`, `forbid_traits`, `must_be_capable_of`) | Generates candidates with the game's generator and keeps the closest match. Only when the player asks. |
 | `swap_starting_pawns` (`first`, `second`) | Swaps two colonists, which is how one left behind joins the group. Only when the player asks. |
-| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `needs`, `restore_needs`, `add_thoughts`, `remove_thoughts`, `clear_bad_memories`, `add_conditions`, `remove_conditions`, `mental_state`, `end_mental_state`, `clear_relations`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`, `hair_color`, `skin_color`, `head`, `body`, `clear_apparel`, `wear`, `weapon`, `add_implants`) | Sets attributes directly. Only when the player explicitly asks. |
+| `edit_starting_pawn` (`index`, `first_name`, `nickname`, `last_name`, `age`, `childhood`, `adulthood`, `skills`, `passions`, `add_traits`, `remove_traits`, `clear_health`, `needs`, `restore_needs`, `add_thoughts`, `remove_thoughts`, `clear_bad_memories`, `add_conditions`, `remove_conditions`, `add_abilities`, `remove_abilities`, `mental_state`, `end_mental_state`, `clear_relations`, `gender`, `hair`, `beard`, `favorite_color`, `xenotype`, `possessions`, `hair_color`, `skin_color`, `head`, `body`, `clear_apparel`, `wear`, `weapon`, `add_implants`) | Sets attributes directly. Only when the player explicitly asks. |
 
 ## Settings and mods
 

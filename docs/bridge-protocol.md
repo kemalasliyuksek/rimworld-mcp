@@ -99,6 +99,13 @@ Failure looks like this:
 | `POST /v1/trade/deal` | `trader`, `negotiator`, `deal` | `trade` |
 | `POST /v1/caravans/form` | `pawns`, `items`, `tile` | `form_caravan` |
 | `POST /v1/caravans/send` | `caravan`, `tile` | `send_caravan` |
+| `/v1/abilities` | `pawn` | `list_abilities` |
+| `POST /v1/abilities/use` | `pawn`, `ability`, `target`, `x`, `z`, `tile`, `confirm` | `use_ability` |
+| `POST /v1/colony/bills/edit` | See `docs/tools.md` | `edit_bill` |
+| `POST /v1/policies/create` | `kind`, `name`, `copy_from` | `create_policy` |
+| `POST /v1/policies/edit` | See `docs/tools.md` | `edit_policy` |
+| `POST /v1/policies/delete` | `kind`, `policy` | `delete_policy` |
+| `POST /v1/areas/set` | `area`, `add`, `remove`, `rename`, `delete`, `map` | `set_area` |
 | `POST /v1/cheats/spawn-thing` | See `docs/tools.md` | `spawn_thing` |
 | `POST /v1/cheats/spawn-pawn` | See `docs/tools.md` | `spawn_pawn` |
 | `POST /v1/cheats/incident` | `incident`, `points`, `map` | `trigger_incident` |

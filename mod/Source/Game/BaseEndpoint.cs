@@ -179,16 +179,23 @@ namespace RimWorldMcp.Bridge.Game
             json.EndArray();
         }
 
-        private static void WriteBill(JsonWriter json, Bill bill)
+        internal static void WriteBill(JsonWriter json, Bill bill)
         {
             json.BeginObject();
             json.Prop("label", GameAccess.Clean(bill.LabelCap));
+            json.Prop("recipe", bill.recipe?.defName);
             json.Prop("suspended", bill.suspended);
+            json.Prop("skill_range", $"{bill.allowedSkillRange.min}-{bill.allowedSkillRange.max}");
+            json.Prop("radius", bill.ingredientSearchRadius);
+            json.Prop("worker", bill.PawnRestriction?.LabelShort);
             if (bill is Bill_Production production)
             {
                 json.Prop("mode", production.repeatMode?.defName);
                 json.Prop("repeat_info", GameAccess.Clean(production.RepeatInfoText));
                 json.Prop("paused", production.paused);
+                json.Prop("pause_when_satisfied", production.pauseWhenSatisfied);
+                json.Prop("quality", $"{production.qualityRange.min}-{production.qualityRange.max}");
+                json.Prop("store", production.GetStoreMode()?.defName);
             }
             json.EndObject();
         }

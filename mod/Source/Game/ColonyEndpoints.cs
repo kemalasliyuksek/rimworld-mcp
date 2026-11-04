@@ -74,7 +74,7 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
-        private static (Thing Thing, BillStack Bills) ResolveBench(QueryParams query)
+        internal static (Thing Thing, BillStack Bills) ResolveBench(QueryParams query)
         {
             Thing thing = OrderEndpoints.FindThing(query.RequireString("thing"));
             if (!(thing is IBillGiver giver) || giver.BillStack == null || thing is Pawn)
@@ -122,7 +122,7 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
-        private static void ApplyRepeat(Bill_Production bill, QueryParams query)
+        internal static void ApplyRepeat(Bill_Production bill, QueryParams query)
         {
             string mode = query.GetString("repeat", "count");
             int count = query.GetInt("count", 1, 1, 100000);

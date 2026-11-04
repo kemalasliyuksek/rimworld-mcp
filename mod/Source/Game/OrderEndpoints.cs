@@ -290,7 +290,7 @@ namespace RimWorldMcp.Bridge.Game
             json.EndObject();
         }
 
-        private static void WriteOutcome(JsonWriter json, PlayerInputGuard.Outcome outcome)
+        internal static void WriteOutcome(JsonWriter json, PlayerInputGuard.Outcome outcome)
         {
             json.Prop("done", outcome.NeedsPlayer == null && outcome.NeedsConfirmation == null);
             if (outcome.NeedsPlayer != null)

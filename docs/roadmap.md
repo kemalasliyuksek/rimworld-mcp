@@ -39,8 +39,8 @@ Everything a player can do, and everything cheats can do, always on the player's
 - [x] Hidden information, when the player asks about it
 - [x] Trade and caravans
 - [x] Allowed areas, apparel and drug policies, and storage filters
-- [ ] Psycasts and abilities, which use their own targeting
-- [ ] Editing bill details, and creating new policies
+- [x] Psycasts and abilities
+- [x] Editing bill details, and creating policies and allowed areas
 
 ## Compatibility
 
