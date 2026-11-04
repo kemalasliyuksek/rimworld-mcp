@@ -27,13 +27,15 @@ Plans can change. Feedback and ideas are welcome in the issues.
 
 ## Actions (next)
 
-Optional control of the game during play, off by default.
+Everything a player can do, and everything cheats can do, always on the player's request.
 
-- [x] Work priorities and schedules, on the player's request
-- [ ] More player-level actions, the same things a player could do by hand, such as research, bills
-      and zones
-- [ ] An in-game setting that enables them, and a way to approve each action
-- [ ] Never cheats: spawning items, editing pawns and triggering events stay out of scope
+- [x] Work priorities and schedules
+- [ ] Orders for pawns, such as drafting, moving, attacking and working on a target
+- [ ] Building and plans, including laying out a whole base as plan lines for the player to approve
+- [ ] Research, bills, zones, trade, caravans and dialog choices
+- [ ] Game speed, so that an assistant can play for the player when asked
+- [ ] Cheats, such as spawning items, editing pawns and triggering events
+- [ ] Hidden information, when the player asks about it
 
 ## Compatibility
 

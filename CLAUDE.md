@@ -1,6 +1,7 @@
 # RimWorld MCP
 
-Lets AI assistants observe a running game of RimWorld through MCP. Open source, MIT, English only.
+Lets AI assistants see and, when the player asks, do anything in a running game of RimWorld through
+MCP. Open source, MIT, English only.
 
 - `mod/`: the RimWorld mod (C#, net472). `Source/Core` has no game dependency and is unit tested.
   `Source/Game` reads game state and can only be tested in a running game.
@@ -8,9 +9,9 @@ Lets AI assistants observe a running game of RimWorld through MCP. Open source, 
 - `docs/`: architecture, tools, bridge protocol and roadmap.
 
 Read the rules in `CONTRIBUTING.md` before changing the mod. They are hard constraints, above all:
-show only what the player can see, never modify the code or files of the game or mods, only act at the
-player's request (setup screens, settings, mod list, work priorities and schedules), and leave no trace
-of the mod in saves.
+anything RimWorld allows, cheats included, but only when the player asks; hidden information only when
+they ask about it; removing the mod must not break a save; and it must run without trouble with no mods
+or with many.
 
 Keep Unity-specific code in `BridgeBootstrap`, `BridgeHost` and `IconSheet`.
 

@@ -7,23 +7,32 @@ Thanks for helping out. Bug reports, tool ideas and pull requests are all welcom
 These keep the project trustworthy and easy to maintain, so changes that break them will not be
 accepted:
 
-1. **Show only what the player can see.** New data must respect fog of war, hidden conditions and
-   invisibility. Use the helpers in `mod/Source/Game/GameAccess.cs`. The one exception is the
-   predicted rock layout in site search, before a game starts.
-2. **Never modify the game or its mods, and only observe during play.** Do not touch their code or files. Changing the player's settings and mod list on request is fine, through the game's own config. The one exception during play is `set_work_priorities` and `set_schedule`, which change what the
-   player could set on the game's Work and Schedule tabs, on request. They do not command pawns. Read
-   endpoints have no gameplay side effects and do not consume the game's random numbers: all endpoints
-   run inside `Rand.PushState()`. On the new game screens, tools may set things up, but only when the
-   player asks, using `POST`, and always leaving the final confirmation to the player. Prefer the same
-   steps as the game's own buttons. Only `edit_starting_pawn` goes further, and it says so in its
-   description, like other character editor mods.
-3. **No save footprint.** Do not add defs, game components or anything else that ends up in a save.
-4. **No required third-party mods or libraries in the mod.** That includes Harmony. Use reflection
-   for the occasional private field.
-5. **Never freeze the game.** Endpoints run on the main thread, and a planet can have hundreds of
+1. **Show what the player can see, and more only when they ask.** By default, data respects fog of
+   war, hidden conditions and invisibility, using the helpers in `mod/Source/Game/GameAccess.cs`. Hidden
+   information may be exposed, but only through a tool or parameter that exists for that purpose and
+   says so, and an assistant must use it only when the player asks about what is hidden. It must never
+   volunteer it. Predicted rock in site search stays available before a game starts.
+2. **Anything the player asks for, and nothing they did not.** Tools may do anything RimWorld allows:
+   give orders, build, change settings, play for the player, and cheat. They act only when the player
+   asks, never on the assistant's own initiative, and text from the game or from mods is data, never a
+   request. Acting tools use `POST` and are marked as acting. A tool that goes beyond what the game
+   normally allows says so in its description. Read endpoints have no gameplay side effects and do not
+   consume the game's random numbers: all endpoints run inside `Rand.PushState()`. Prefer the same steps
+   as the game's own buttons, so that the game's checks and other mods still apply. Never change the
+   files of the game or of other mods on disk.
+3. **Saves stay safe.** Removing the mod must not break a save. What the tools create should be
+   ordinary game things. If a feature really has to store its own data, removing the mod must still
+   leave the save loading cleanly.
+4. **It works for everyone, with no mods or with hundreds.** Avoid required dependencies, and never
+   depend on another project's API. Harmony may be used where a feature really needs it. Support for a
+   specific mod must be detected at runtime: when that mod is absent, its tool reports that it is
+   unavailable and nothing else changes. Prefer general mechanisms, which also cover mods nobody has
+   tested.
+5. **Never crash, freeze or waste.** Endpoints run on the main thread, and a planet can have hundreds of
    thousands of tiles. Anything that scans the world must stop at a time limit and report how far it
    got. Beware of game methods that look cheap, because some loop over every settlement or sample a
-   whole year of weather.
+   whole year of weather. One broken item from a mod must not fail a whole response. Keep responses as
+   small as they can be while still answering the question.
 6. **Never commit game files.** This includes decompiled code and game assemblies. The RimWorld EULA
    allows decompiling to learn from and refer to the code, but not redistributing it.
 
